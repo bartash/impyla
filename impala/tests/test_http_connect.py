@@ -20,6 +20,9 @@ from contextlib import closing
 
 import pytest
 
+from impala.error import RPCError
+
+
 @pytest.yield_fixture
 def http_503_server():
   class RequestHandler503(SimpleHTTPServer.SimpleHTTPRequestHandler):
@@ -74,7 +77,7 @@ class TestHttpConnect(object):
     try:
       con.cursor()
       assert False, "Should have got exception"
-    except Exception as e:
+    except RPCError as e:
       assert "HTTP code 503: Service Unavailable" in str(e)
 
 
