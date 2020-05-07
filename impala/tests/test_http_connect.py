@@ -73,8 +73,8 @@ class TestHttpConnect(object):
     con = connect("localhost", http_503_server.PORT, use_http_transport=True)
     try:
       con.cursor()
-    except EOFError as e:
-      print("caught EOFError")
+    except Exception as e:
+      print("caught Exception with str %s" % e)
 
 
 
