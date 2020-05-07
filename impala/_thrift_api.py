@@ -33,6 +33,7 @@ import six
 import ssl
 import sys
 
+from impala.error import RPCError
 from impala.util import get_logger_and_init_null
 
 
