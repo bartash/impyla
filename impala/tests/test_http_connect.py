@@ -71,7 +71,12 @@ class TestHttpConnect(object):
     Check that XXX when the server returns a 503 error."""
 
     con = connect("localhost", http_503_server.PORT, use_http_transport=True)
-    con.cursor()
+    try:
+      con.cursor()
+    except EOFError as e:
+      print("caught EOFError")
+
+
 
 
 
