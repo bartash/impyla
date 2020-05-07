@@ -27,6 +27,7 @@ import six
 import ssl
 import sys
 
+from impala.impala_http_client import ImpalaHttpClient
 from impala.util import get_logger_and_init_null
 
 
@@ -36,7 +37,6 @@ log = get_logger_and_init_null(__name__)
 if six.PY2:
     # pylint: disable=import-error,unused-import
     # import Apache Thrift code
-    from thrift.transport.THttpClient import THttpClient
     from thrift.transport.TSocket import TSocket
     from thrift.transport.TTransport import (
         TBufferedTransport, TTransportException)
@@ -63,7 +63,6 @@ if six.PY2:
 if six.PY3:
     # When using python 3, import from thriftpy2 rather than thrift
     from thriftpy2 import load
-    from thriftpy2.http import THttpClient
     from thriftpy2.thrift import TClient, TApplicationException
     # TODO: reenable cython
     # from thriftpy2.protocol import TBinaryProtocol
@@ -135,11 +134,11 @@ def get_http_transport(host, port, http_path, timeout=None, use_ssl=False,
         url = 'https://%s:%s/%s' % (host, port, http_path)
         log.debug('get_http_transport url=%s', url)
         # TODO(#362): Add server authentication with thrift 0.12.
-        transport = THttpClient(url)
+        transport = ImpalaHttpClient(url)
     else:
         url = 'http://%s:%s/%s' % (host, port, http_path)
         log.debug('get_http_transport url=%s', url)
-        transport = THttpClient(url)
+        transport = ImpalaHttpClient(url)
 
     # Set defaults for PLAIN SASL / LDAP connections.
     if auth_mechanism in ['PLAIN', 'LDAP']:
