@@ -31,7 +31,7 @@ from impala.interface import Connection, Cursor, _bind_parameters
 from impala.error import (NotSupportedError, OperationalError,
                           ProgrammingError, HiveServer2Error)
 from impala._thrift_api import (
-    get_socket, get_http_transport, get_transport, THttpClient,
+    get_socket, get_http_transport, get_transport, ImpalaHttpClient,
     TTransportException, TBinaryProtocol, TOpenSessionReq, TFetchResultsReq,
     TCloseSessionReq, TExecuteStatementReq, TGetInfoReq, TGetInfoType, TTypeId,
     TFetchOrientation, TGetResultSetMetadataReq, TStatusCode, TGetColumnsReq,
@@ -1008,13 +1008,15 @@ class ThriftRPC(object):
                 log.debug('Transport opened')
                 func = getattr(self.client, func_name)
                 return func(request)
-            except socket.error:
-                log.exception('Failed to open transport (tries_left=%s)',
-                              tries_left)
-            except TTransportException:
-                log.exception('Failed to open transport (tries_left=%s)',
-                              tries_left)
-            except Exception:
+            except socket.error as s:
+                log.exception('Failed to open transport (tries_left=%s, err=%s)',
+                              tries_left, str(s))
+            except TTransportException as t:
+                log.exception('Failed to open transport (tries_left=%s, err=%s)',
+                              tries_left, str(t))
+            except Exception as e:
+                log.exception('Failed to open transport (tries_left=%s, err=%s)',
+                            tries_left, str(e))
                 raise
             log.debug('Closing transport (tries_left=%s)', tries_left)
             transport.close()
