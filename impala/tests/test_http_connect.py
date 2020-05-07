@@ -71,7 +71,7 @@ class TestHttpConnect(object):
 
   def test_http_interactions(self, http_503_server):
     """Test interactions with the http server when using hs2-http protocol.
-    Check that XXX when the server returns a 503 error."""
+    Check that there is an RPCError exception when the server returns a 503 error."""
 
     con = connect("localhost", http_503_server.PORT, use_http_transport=True)
     try:
@@ -79,7 +79,6 @@ class TestHttpConnect(object):
       assert False, "Should have got exception"
     except RPCError as e:
       assert "HTTP code 503: Service Unavailable" in str(e)
-
 
 
 def get_unused_port():
