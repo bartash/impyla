@@ -73,11 +73,9 @@ class TestHttpConnect(object):
     con = connect("localhost", http_503_server.PORT, use_http_transport=True)
     try:
       con.cursor()
+      assert False, "Should have got exception"
     except Exception as e:
-      print("caught Exception with str %s" % e)
-
-
-
+      assert "HTTP code 503: Service Unavailable" in str(e)
 
 
 
