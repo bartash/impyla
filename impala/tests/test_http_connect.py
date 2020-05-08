@@ -59,6 +59,7 @@ def http_503_server():
 
       # Respond with 503.
       self.send_response(code=httplib.SERVICE_UNAVAILABLE, message="Service Unavailable")
+      self.end_headers()
 
   class TestHTTPServer503(object):
     def __init__(self):
@@ -96,7 +97,7 @@ class TestHttpConnect(object):
     try:
       con.cursor()
       assert False, "Should have got exception"
-    except RPCError as e:
+    except Exception as e:
       assert "HTTP code 503: Service Unavailable" in str(e)
 
 
