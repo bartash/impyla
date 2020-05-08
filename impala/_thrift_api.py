@@ -73,7 +73,7 @@ if six.PY3:
     # TODO: reenable cython
     # from thriftpy2.protocol import TBinaryProtocol
     from thriftpy2.protocol.binary import TBinaryProtocol  # noqa
-    from thriftpy2.transport import TSocket, TTransportException  # noqa
+    from thriftpy2.transport import (TSocket, TTransportException, TTransportBase) # noqa
     # TODO: reenable cython
     # from thriftpy2.transport import TBufferedTransport
     from thriftpy2.transport.buffered import TBufferedTransport  # noqa
