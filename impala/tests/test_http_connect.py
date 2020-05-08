@@ -12,16 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import six
-
-
-
-
 import socket
 import threading
 from contextlib import closing
 
 import pytest
+import six
 
 from impala.error import RPCError
 
@@ -33,6 +29,7 @@ if six.PY2:
 if six.PY3:
   import http.server as SimpleHTTPServer
   import socketserver as SocketServer
+  import http.client as httplib
 
 
 @pytest.yield_fixture
