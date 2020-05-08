@@ -32,6 +32,7 @@ if six.PY2:
 
 if six.PY3:
   import http.server as SimpleHTTPServer
+  import socketserver as SocketServer
 
 
 @pytest.yield_fixture
