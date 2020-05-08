@@ -42,16 +42,22 @@ def http_503_server():
     recent http request, and always returns a 503 http code"""
 
     def do_POST(self):
-      # The unfortunately named self.headers here is an instance of mimetools.Message that
-      # contains the request headers.
-      request_headers = None
-      if six.PY2:
-        request_headers = self.headers.headers
-      if six.PY3:
-        request_headers = self.headers
-
       # Ensure that only one 'Host' header is contained in the request before responding.
-      host_hdr_count = sum([header.startswith('Host:') for header in request_headers])
+      request_headers = None
+      host_hdr_count = 0
+      if six.PY2:
+        # The unfortunately named self.headers here is an instance of mimetools.Message that
+        # contains the request headers.
+        request_headers = self.headers.headers
+        host_hdr_count = sum([header.startswith('Host:') for header in request_headers])
+      if six.PY3:
+        # self.Headers is a HTTPMessage
+        request_headers = self.headers
+        items = request_headers.items()
+        for item in items:
+          print("item is %s" % str(item))
+          print("first is %s" % item[0])
+        host_hdr_count = sum([header[0] == 'Host' for header in request_headers.items()])
       assert host_hdr_count == 1, "duplicate 'Host:' headers in %s" % request_headers
 
       # Respond with 503.
