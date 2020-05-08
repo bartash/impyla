@@ -211,6 +211,9 @@ class ImpalaHttpClient(TTransportBase):
   def isOpen(self):
     return self.__http is not None
 
+  def is_open(self):
+    return self.__http is not None
+
   def setTimeout(self, ms):
     if ms is None:
       self.__timeout = None
