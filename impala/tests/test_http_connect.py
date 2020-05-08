@@ -11,9 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import SimpleHTTPServer
-import SocketServer
-import httplib
+
+import six
+
+
+
+
 import socket
 import threading
 from contextlib import closing
@@ -21,6 +24,14 @@ from contextlib import closing
 import pytest
 
 from impala.error import RPCError
+
+if six.PY2:
+  import SimpleHTTPServer
+  import SocketServer
+  import httplib
+
+if six.PY3:
+  import http.server as SimpleHTTPServer
 
 
 @pytest.yield_fixture
