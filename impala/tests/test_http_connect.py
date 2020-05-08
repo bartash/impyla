@@ -44,7 +44,11 @@ def http_503_server():
     def do_POST(self):
       # The unfortunately named self.headers here is an instance of mimetools.Message that
       # contains the request headers.
-      request_headers = self.headers.headers
+      request_headers = None
+      if six.PY2:
+        request_headers = self.headers.headers
+      if six.PY3:
+        request_headers = self.headers
 
       # Ensure that only one 'Host' header is contained in the request before responding.
       host_hdr_count = sum([header.startswith('Host:') for header in request_headers])
