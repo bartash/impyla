@@ -14,25 +14,21 @@
 
 from __future__ import absolute_import
 
-import six
-import time
 import getpass
-import datetime
-import socket
-import operator
 import re
-import sys
-from six.moves import range
-from bitarray import bitarray
+import socket
 
-from impala.compat import Decimal
-from impala.util import get_logger_and_init_null
-from impala.interface import Connection, Cursor, _bind_parameters
-from impala.error import (NotSupportedError, OperationalError,
-                          ProgrammingError, HiveServer2Error)
+import datetime
+import operator
+import six
+import sys
+import time
+from bitarray import bitarray
+from six.moves import range
+
 from impala._thrift_api import (
-    get_socket, get_http_transport, get_transport, ImpalaHttpClient,
-    TTransportException, TBinaryProtocol, TOpenSessionReq, TFetchResultsReq,
+    get_socket, get_http_transport, get_transport, TTransportException, TBinaryProtocol, TOpenSessionReq,
+    TFetchResultsReq,
     TCloseSessionReq, TExecuteStatementReq, TGetInfoReq, TGetInfoType, TTypeId,
     TFetchOrientation, TGetResultSetMetadataReq, TStatusCode, TGetColumnsReq,
     TGetSchemasReq, TGetTablesReq, TGetFunctionsReq, TGetOperationStatusReq,
@@ -40,7 +36,11 @@ from impala._thrift_api import (
     TProtocolVersion, TGetRuntimeProfileReq, TRuntimeProfileFormat,
     TGetExecSummaryReq, ImpalaHiveServer2Service, TExecStats, ThriftClient,
     TApplicationException)
-
+from impala.compat import Decimal
+from impala.error import (NotSupportedError, OperationalError,
+                          ProgrammingError, HiveServer2Error, HttpError)
+from impala.interface import Connection, Cursor, _bind_parameters
+from impala.util import get_logger_and_init_null
 
 log = get_logger_and_init_null(__name__)
 
@@ -796,7 +796,7 @@ def threaded(func):
 def connect(host, port, timeout=None, use_ssl=False, ca_cert=None,
             user=None, password=None, kerberos_service_name='impala',
             auth_mechanism=None, krb_host=None, use_http_transport=False,
-            http_path='', auth_cookie_names=None):
+            http_path='', auth_cookie_names=None, retries=3):
     log.debug('Connecting to HiveServer2 %s:%s with %s authentication '
               'mechanism', host, port, auth_mechanism)
 
@@ -847,7 +847,7 @@ def connect(host, port, timeout=None, use_ssl=False, ca_cert=None,
     log.debug('transport=%s protocol=%s service=%s', transport, protocol,
               service)
 
-    return HS2Service(service)
+    return HS2Service(service, retries=retries)
 
 
 def _is_columnar_protocol(hs2_protocol_version):
@@ -1015,6 +1015,7 @@ class ThriftRPC(object):
         # get the thrift transport
         transport = self.client._iprot.trans
         tries_left = self.retries
+        last_http_exception = None
         while tries_left > 0:
             try:
                 log.debug('Attempting to open transport (tries_left=%s)',
@@ -1029,13 +1030,21 @@ class ThriftRPC(object):
             except TTransportException:
                 log.exception('Failed to open transport (tries_left=%s)',
                               tries_left)
-            except Exception as e:
-                log.exception('XXX caught %s', type(e))
+            except HttpError as h:
+                last_http_exception = h
+                log.exception('XXX caught %s tries_left=%d', type(h), tries_left)
+            except Exception:
                 raise
             log.debug('Closing transport (tries_left=%s)', tries_left)
             transport.close()
             tries_left -= 1
 
+        if last_http_exception is not None:
+            raise last_http_exception
+            # We could embed the exception
+            # raise HiveServer2Error('Failed after retrying {0} times, '
+            #                        'last exception was {1}'
+            #                        .format(self.retries, last_http_exception))
         raise HiveServer2Error('Failed after retrying {0} times'
                                .format(self.retries))
 
