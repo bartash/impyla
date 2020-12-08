@@ -1027,12 +1027,14 @@ class ThriftRPC(object):
             except socket.error:
                 log.exception('Failed to open transport (tries_left=%s)',
                               tries_left)
+                last_http_exception = None
             except TTransportException:
                 log.exception('Failed to open transport (tries_left=%s)',
                               tries_left)
+                last_http_exception = None
             except HttpError as h:
                 last_http_exception = h
-                log.exception('XXX caught %s tries_left=%d', type(h), tries_left)
+                log.debug('Caught %s (tries_left=%s)', h, tries_left)
             except Exception:
                 raise
             log.debug('Closing transport (tries_left=%s)', tries_left)
