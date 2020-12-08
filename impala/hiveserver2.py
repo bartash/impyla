@@ -1029,7 +1029,8 @@ class ThriftRPC(object):
             except TTransportException:
                 log.exception('Failed to open transport (tries_left=%s)',
                               tries_left)
-            except Exception:
+            except Exception as e:
+                log.exception('XXX caught %s', type(e))
                 raise
             log.debug('Closing transport (tries_left=%s)', tries_left)
             transport.close()
