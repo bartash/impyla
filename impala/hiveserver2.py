@@ -402,7 +402,7 @@ class HiveServer2Cursor(Cursor):
         loop_start = time.time()
         while True:
             req = TGetOperationStatusReq(operationHandle=self._last_operation.handle)
-            resp = self._last_operation._rpc('GetOperationStatus', req)
+            resp = self._last_operation._rpc('GetOperationStatus', req, True)
             self._last_operation.update_has_result_set(resp)
             operation_state = TOperationState._VALUES_TO_NAMES[resp.operationState]
 
@@ -1003,14 +1003,14 @@ class ThriftRPC(object):
         self.client = client
         self.retries = retries
 
-    def _rpc(self, func_name, request):
+    def _rpc(self, func_name, request, retry_on_http_error=False):
         self._log_request(func_name, request)
-        response = self._execute(func_name, request)
+        response = self._execute(func_name, request, retry_on_http_error)
         self._log_response(func_name, response)
         err_if_rpc_not_ok(response)
         return response
 
-    def _execute(self, func_name, request):
+    def _execute(self, func_name, request, retry_on_http_error=False):
         # pylint: disable=protected-access
         # get the thrift transport
         transport = self.client._iprot.trans
@@ -1033,9 +1033,11 @@ class ThriftRPC(object):
                               tries_left)
                 last_http_exception = None
             except HttpError as h:
+                if not retry_on_http_error:
+                    raise
                 last_http_exception = h
                 log.info('XXX Caught %s [%s] (tries_left=%s)', h, h.body, tries_left) # FIXME remove
-                log.debug('Caught %s (tries_left=%s)', h, tries_left)
+                log.debug('Caught %s [%s] (tries_left=%s)', h, h.body, tries_left)
             except Exception:
                 raise
             log.debug('Closing transport (tries_left=%s)', tries_left)
@@ -1052,7 +1054,7 @@ class ThriftRPC(object):
                                .format(self.retries))
 
     def _operation(self, kind, request):
-        resp = self._rpc(kind, request)
+        resp = self._rpc(kind, request, False)
         return self._get_operation(resp.operationHandle)
 
     def _log_request(self, kind, request):
@@ -1100,7 +1102,7 @@ class HS2Service(ThriftRPC):
         req = TOpenSessionReq(client_protocol=protocol,
                               username=user,
                               configuration=configuration)
-        resp = self._rpc('OpenSession', req)
+        resp = self._rpc('OpenSession', req, True)
         return HS2Session(self, resp.sessionHandle,
                           resp.configuration,
                           resp.serverProtocolVersion)
@@ -1125,7 +1127,7 @@ class HS2Session(ThriftRPC):
 
     def close(self):
         req = TCloseSessionReq(sessionHandle=self.handle)
-        self._rpc('CloseSession', req)
+        self._rpc('CloseSession', req, False)
 
     def execute(self, statement, configuration=None, run_async=False):
         req = TExecuteStatementReq(sessionHandle=self.handle,
@@ -1227,20 +1229,20 @@ class Operation(ThriftRPC):
     def get_status(self):
         # pylint: disable=protected-access
         req = TGetOperationStatusReq(operationHandle=self.handle)
-        resp = self._rpc('GetOperationStatus', req)
+        resp = self._rpc('GetOperationStatus', req, False)
         self.update_has_result_set(resp)
         return TOperationState._VALUES_TO_NAMES[resp.operationState]
 
     def get_state(self):
         req = TGetOperationStatusReq(operationHandle=self.handle)
-        resp = self._rpc('GetOperationStatus', req)
+        resp = self._rpc('GetOperationStatus', req, True)
         self.update_has_result_set(resp)
         return resp
 
     def get_log(self, max_rows=1024, orientation=TFetchOrientation.FETCH_NEXT):
         try:
             req = TGetLogReq(operationHandle=self.handle)
-            log = self._rpc('GetLog', req).log
+            log = self._rpc('GetLog', req, True).log
         except TApplicationException as e: # raised if Hive is used
             if not e.type == TApplicationException.UNKNOWN_METHOD:
                 raise
@@ -1248,7 +1250,7 @@ class Operation(ThriftRPC):
                                    orientation=orientation,
                                    maxRows=max_rows,
                                    fetchType=1)
-            resp = self._rpc('FetchResults', req)
+            resp = self._rpc('FetchResults', req, False)
             schema = [('Log', 'STRING', None, None, None, None, None)]
             log = self._wrap_results(resp.results, schema, convert_types=True)
             log = '\n'.join(l[0] for l in log)
@@ -1256,17 +1258,17 @@ class Operation(ThriftRPC):
 
     def cancel(self):
         req = TCancelOperationReq(operationHandle=self.handle)
-        return self._rpc('CancelOperation', req)
+        return self._rpc('CancelOperation', req, True)
 
     def close(self):
         req = TCloseOperationReq(operationHandle=self.handle)
-        return self._rpc('CloseOperation', req)
+        return self._rpc('CloseOperation', req, False)
 
     def get_profile(self, profile_format=TRuntimeProfileFormat.STRING):
         req = TGetRuntimeProfileReq(operationHandle=self.handle,
                                     sessionHandle=self.session.handle,
                                     format=profile_format)
-        resp = self._rpc('GetRuntimeProfile', req)
+        resp = self._rpc('GetRuntimeProfile', req, True)
         if profile_format == TRuntimeProfileFormat.THRIFT:
             return resp.thrift_profile
         return resp.profile
@@ -1274,7 +1276,7 @@ class Operation(ThriftRPC):
     def get_summary(self):
         req = TGetExecSummaryReq(operationHandle=self.handle,
                                  sessionHandle=self.session.handle)
-        resp = self._rpc('GetExecSummary', req)
+        resp = self._rpc('GetExecSummary', req, True)
         return resp.summary
 
     def fetch(self, schema=None, max_rows=1024,
@@ -1291,7 +1293,7 @@ class Operation(ThriftRPC):
         req = TFetchResultsReq(operationHandle=self.handle,
                                orientation=orientation,
                                maxRows=max_rows)
-        resp = self._rpc('FetchResults', req)
+        resp = self._rpc('FetchResults', req, False)
         return self._wrap_results(resp.results, resp.hasMoreRows, schema,
                                   convert_types=convert_types)
 
@@ -1314,7 +1316,7 @@ class Operation(ThriftRPC):
             return None
 
         req = TGetResultSetMetadataReq(operationHandle=self.handle)
-        resp = self._rpc('GetResultSetMetadata', req)
+        resp = self._rpc('GetResultSetMetadata', req, True)
 
         schema = []
         for column in resp.schema.columns:
