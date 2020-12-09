@@ -1034,6 +1034,7 @@ class ThriftRPC(object):
                 last_http_exception = None
             except HttpError as h:
                 last_http_exception = h
+                log.info('XXX Caught %s (tries_left=%s)', h, tries_left) # FIXME remove
                 log.debug('Caught %s (tries_left=%s)', h, tries_left)
             except Exception:
                 raise
