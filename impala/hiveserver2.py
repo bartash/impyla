@@ -1038,6 +1038,17 @@ class ThriftRPC(object):
                 last_http_exception = h
                 log.info('XXX Caught %s [%s] (tries_left=%s)', h, h.body, tries_left) # FIXME remove
                 log.debug('Caught %s [%s] (tries_left=%s)', h, h.body, tries_left)
+                if tries_left > 0:
+                    retry_secs = None
+                    retry_after = h.http_headers.get('Retry-After', None)
+                    if retry_after:
+                        try:
+                            retry_secs = int(retry_after)
+                        except ValueError:
+                            retry_secs = None
+                    if retry_secs:
+                        log.debug("sleeping after seeing Retry-After value of %d", retry_secs)
+                        time.sleep(retry_secs)
             except Exception:
                 raise
             log.debug('Closing transport (tries_left=%s)', tries_left)
