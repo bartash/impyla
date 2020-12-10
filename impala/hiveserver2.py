@@ -1250,12 +1250,13 @@ class Operation(ThriftRPC):
         # pylint: disable=protected-access
         req = TGetOperationStatusReq(operationHandle=self.handle)
         # GetOperationStatus rpc is idempotent and so safe to retry.
-        resp = self._rpc('GetOperationStatus', req, False)
+        resp = self._rpc('GetOperationStatus', req, True)
         self.update_has_result_set(resp)
         return TOperationState._VALUES_TO_NAMES[resp.operationState]
 
     def get_state(self):
         req = TGetOperationStatusReq(operationHandle=self.handle)
+        # GetOperationStatus rpc is idempotent and so safe to retry.
         resp = self._rpc('GetOperationStatus', req, True)
         self.update_has_result_set(resp)
         return resp
