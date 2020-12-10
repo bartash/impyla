@@ -1037,7 +1037,10 @@ class ThriftRPC(object):
                     raise
                 last_http_exception = h
                 log.info('XXX Caught %s [%s] (tries_left=%s)', h, h.body, tries_left) # FIXME remove
-                log.debug('Caught HttpError %s body=%s in %s (tries_left=%s)', h, h.body, func_name, tries_left)
+                # body_message = ''
+                # if h.body is not None:
+                #     body_message = "body=%s"
+                log.debug('Caught HttpError %s %s in %s (tries_left=%s)', h, str(h.body or ''), func_name, tries_left)
                 if tries_left > 0:
                     retry_secs = None
                     retry_after = h.http_headers.get('Retry-After', None)
