@@ -118,6 +118,11 @@ class TestHS2FaultInjection(object):
         # self.custom_hs2_http_client.connect()
         # assert self.custom_hs2_http_client.connected
 
+    def __expect_msg_retry(self, impala_rpc_name):
+        """Returns expected log message for rpcs which can be retried"""
+        return ("Caught HttpError HTTP code 502: Injected Fault  in {0} (tries_left=3)".
+                format(impala_rpc_name))
+
     def test_old_simple_connect(self): # FIXME remove
         con = connect("localhost", ENV.http_port, use_http_transport=True, http_path="cliservice")
         cur = con.cursor()
@@ -152,6 +157,7 @@ class TestHS2FaultInjection(object):
         for record in caplog.records:
             print(record)
         assert "Caught HttpError HTTP code 502: Injected Fault  in OpenSession (tries_left=3)" in caplog.text
+        assert self.__expect_msg_retry("OpenSession") in caplog.text
         # output = capsys.readouterr()[1].splitlines()
         # assert output[1] == self.__expect_msg_retry("OpenSession")
         # assert output[2] == self.__expect_msg_retry("CloseImpalaOperation")
