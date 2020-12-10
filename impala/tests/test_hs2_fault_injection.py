@@ -11,15 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import six
+from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
 from impala import hiveserver2 as hs2
+from impala._thrift_api import get_http_transport, get_socket, get_transport, ThriftClient
+from impala._thrift_gen.ImpalaService import ImpalaHiveServer2Service
 from impala.error import NotSupportedError
+from impala.hiveserver2 import HS2Service, log
 from impala.tests.util import ImpylaTestEnv
-from impala.util import warn_deprecate, warn_protocol_param
 
 ENV = ImpylaTestEnv()
 
-from impala.dbapi import connect, AUTH_MECHANISMS
+from impala.dbapi import connect
 
 
 class TestHS2FaultInjection(object):
@@ -39,44 +43,20 @@ class TestHS2FaultInjection(object):
         assert rows == [(1,)]
 
     def _connect(self):
-        names = ['impala.auth', 'hive.server2.auth']
-        # pylint: disable=too-many-locals
-
-        # if None is not None:
-        #     warn_deprecate('use_kerberos', 'auth_mechanism="GSSAPI"')
-        #     if None:
-        #         auth_mechanism = 'GSSAPI'
-        # if None is not None:
-        #     warn_deprecate('use_ldap', 'auth_mechanism="LDAP"')
-        #     if None:
-        #         auth_mechanism = 'LDAP'
-        # if 'NOSASL':
-        #     auth_mechanism = 'NOSASL'.upper()
-        # else:
-        #     auth_mechanism = 'NOSASL'
-        # if 'NOSASL' not in AUTH_MECHANISMS:
-        #     raise NotSupportedError(
-        #         'Unsupported authentication mechanism: {0}'.format('NOSASL'))
-        # if None is not None:
-        #     warn_deprecate('ldap_user', 'user')
-        #     user = None
-        # if None is not None:
-        #     warn_deprecate('ldap_password', 'password')
-        #     password = None
-        # if None is not None:
-        #     if None.lower() == 'hiveserver2':
-        #         warn_protocol_param()
-        #     else:
-        #         raise NotSupportedError(
-        #             "'{0}' is not a supported protocol; only HiveServer2 is "
-        #             "supported".format(None))
-        service = hs2.connect(host="localhost", port=ENV.http_port,
-                              timeout=None, use_ssl=False,
-                              ca_cert=None, user=None, password=None,
-                              kerberos_service_name='impala',
-                              auth_mechanism='NOSASL', krb_host=None,
-                              use_http_transport=True,
-                              http_path="cliservice",
-                              auth_cookie_names=names,
-                              retries=3)
+        transport = get_http_transport("localhost", ENV.http_port, http_path="cliservice",
+                                       use_ssl=False, ca_cert=None,
+                                       auth_mechanism='NOSASL',
+                                       user=None, password=None,
+                                       kerberos_host="localhost",
+                                       kerberos_service_name='impala',
+                                       auth_cookie_names=['impala.auth', 'hive.server2.auth'])
+        transport.open()
+        protocol = TBinaryProtocol(transport)
+        if six.PY2:
+            # ThriftClient == ImpalaHiveServer2Service.Client
+            service1 = ThriftClient(protocol)
+        elif six.PY3:
+            # ThriftClient == TClient
+            service1 = ThriftClient(ImpalaHiveServer2Service, protocol)
+        service = HS2Service(service1, retries=3)
         return hs2.HiveServer2Connection(service, default_db=None)
