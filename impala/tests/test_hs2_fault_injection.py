@@ -86,7 +86,36 @@ class FaultInjectingHttpClient(ImpalaHttpClient, object):
 
 
 class TestHS2FaultInjection(object):
-    """uses real connect function"""
+    """Class for testing the http fault injection in various rpcs used by the
+    impala-shell client"""
+    def setup(self):
+        url = 'http://%s:%s/%s' % (ENV.host, ENV.http_port, "cliservice")
+        self.transport = FaultInjectingHttpClient(url)
+
+        # impalad = IMPALAD_HS2_HTTP_HOST_PORT.split(":")
+        # self.custom_hs2_http_client = FaultInjectingImpalaHS2Client(impalad, 1024,
+        #                                                             kerberos_host_fqdn=None, use_http_base_transport=True, http_path='cliservice')
+        # self.transport = self.custom_hs2_http_client.transport
+
+    def teardown(self):
+        self.transport.disable_fault()
+        # self.custom_hs2_http_client.close_connection()
+
+    def connect(self):
+        self.transport.open()
+        protocol = TBinaryProtocol(self.transport)
+        service = None
+        if six.PY2:
+            # ThriftClient == ImpalaHiveServer2Service.Client
+            service = ThriftClient(protocol)
+        elif six.PY3:
+            # ThriftClient == TClient
+            service = ThriftClient(ImpalaHiveServer2Service, protocol)
+        service = HS2Service(service, retries=3)
+        return hs2.HiveServer2Connection(service, default_db=None)
+        # self.custom_hs2_http_client.connect()
+        # assert self.custom_hs2_http_client.connected
+
     def test_old_simple_connect(self): # FIXME remove
         con = connect("localhost", ENV.http_port, use_http_transport=True, http_path="cliservice")
         cur = con.cursor()
@@ -94,12 +123,29 @@ class TestHS2FaultInjection(object):
         rows = cur.fetchall()
         assert rows == [(1,)]
 
-    def test_simple_connect(self):
+    def test_new_simple_connect(self):
         con = self._connect("localhost", ENV.http_port)
         cur = con.cursor()
         cur.execute('select 1')
         rows = cur.fetchall()
         assert rows == [(1,)]
+
+    def test_class_connect_no_injection(self):
+        con = self.connect()
+        cur = con.cursor()
+        cur.execute('select 1')
+        rows = cur.fetchall()
+        assert rows == [(1,)]
+
+    def test_connect(self, capsys):
+        """Tests fault injection in ImpalaHS2Client's connect().
+        OpenSession and CloseImpalaOperation rpcs fail.
+        Retries results in a successful connection."""
+        self.transport.enable_fault(502, "Injected Fault", 0.20)
+        self.connect()
+        output = capsys.readouterr()[1].splitlines()
+        assert output[1] == self.__expect_msg_retry("OpenSession")
+        assert output[2] == self.__expect_msg_retry("CloseImpalaOperation")
 
     def _connect(self, host, port):
         url = 'http://%s:%s/%s' % (host, port, "cliservice")
