@@ -114,6 +114,7 @@ class TestHS2FaultInjection(object):
             # ThriftClient == TClient
             service = ThriftClient(ImpalaHiveServer2Service, protocol)
         service = HS2Service(service, retries=3)
+        self.xservice = service # FIXME do we need this?
         return hs2.HiveServer2Connection(service, default_db=None)
         # self.custom_hs2_http_client.connect()
         # assert self.custom_hs2_http_client.connected
@@ -149,15 +150,17 @@ class TestHS2FaultInjection(object):
         OpenSession and CloseImpalaOperation rpcs fail.
         Retries results in a successful connection."""
         caplog.set_level(logging.DEBUG)
-        self.transport.enable_fault(502, "Injected Fault", 0.20)
+        self.transport.enable_fault(502, "Injected Fault",   0.5)
         con = self.connect()
         cur = con.cursor()
+        cur.close()
+        # self.xservice.close() # FIXME move to teardown
 
         print(caplog.text)
-        for record in caplog.records:
-            print(record)
-        assert "Caught HttpError HTTP code 502: Injected Fault  in OpenSession (tries_left=3)" in caplog.text
+        # for record in caplog.records:
+        #     print(record)
         assert self.__expect_msg_retry("OpenSession") in caplog.text
+        assert self.__expect_msg_retry("CloseImpalaOperation") in caplog.text
         # output = capsys.readouterr()[1].splitlines()
         # assert output[1] == self.__expect_msg_retry("OpenSession")
         # assert output[2] == self.__expect_msg_retry("CloseImpalaOperation")
