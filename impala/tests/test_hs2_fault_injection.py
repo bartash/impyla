@@ -151,7 +151,7 @@ class TestHS2FaultInjection(object):
         print(caplog.text)
         for record in caplog.records:
             print(record)
-
+        assert "Caught HttpError HTTP code 502: Injected Fault  in OpenSession (tries_left=3)" in caplog.text
         # output = capsys.readouterr()[1].splitlines()
         # assert output[1] == self.__expect_msg_retry("OpenSession")
         # assert output[2] == self.__expect_msg_retry("CloseImpalaOperation")
