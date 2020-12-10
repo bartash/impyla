@@ -17,7 +17,7 @@ from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 from impala import hiveserver2 as hs2
 from impala._thrift_api import get_http_transport, get_socket, get_transport, ThriftClient, ImpalaHttpClient
 from impala._thrift_gen.ImpalaService import ImpalaHiveServer2Service
-from impala.error import NotSupportedError
+from impala.error import NotSupportedError, HttpError
 from impala.hiveserver2 import HS2Service, log
 from impala.tests.util import ImpylaTestEnv
 
@@ -142,7 +142,8 @@ class TestHS2FaultInjection(object):
         OpenSession and CloseImpalaOperation rpcs fail.
         Retries results in a successful connection."""
         self.transport.enable_fault(502, "Injected Fault", 0.20)
-        self.connect()
+        con = self.connect()
+        cur = con.cursor()
         output = capsys.readouterr()[1].splitlines()
         assert output[1] == self.__expect_msg_retry("OpenSession")
         assert output[2] == self.__expect_msg_retry("CloseImpalaOperation")
