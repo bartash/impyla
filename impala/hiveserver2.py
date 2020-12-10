@@ -1053,8 +1053,8 @@ class ThriftRPC(object):
         raise HiveServer2Error('Failed after retrying {0} times'
                                .format(self.retries))
 
-    def _operation(self, kind, request):
-        resp = self._rpc(kind, request, False)
+    def _operation(self, kind, request, retry_on_http_error=False):
+        resp = self._rpc(kind, request, retry_on_http_error)
         return self._get_operation(resp.operationHandle)
 
     def _log_request(self, kind, request):
@@ -1102,6 +1102,9 @@ class HS2Service(ThriftRPC):
         req = TOpenSessionReq(client_protocol=protocol,
                               username=user,
                               configuration=configuration)
+        # OpenSession rpcs are idempotent and so ok to retry. If the client gets
+        # disconnected and the server successfully opened a session, the client
+        # will retry and rely on server to clean up the session.
         resp = self._rpc('OpenSession', req, True)
         return HS2Session(self, resp.sessionHandle,
                           resp.configuration,
@@ -1127,6 +1130,8 @@ class HS2Session(ThriftRPC):
 
     def close(self):
         req = TCloseSessionReq(sessionHandle=self.handle)
+        # CloseSession rpcs don't need retries since we catch all exceptions and close
+        # transport.
         self._rpc('CloseSession', req, False)
 
     def execute(self, statement, configuration=None, run_async=False):
@@ -1134,30 +1139,34 @@ class HS2Session(ThriftRPC):
                                    statement=statement,
                                    confOverlay=configuration,
                                    runAsync=run_async)
-        return self._operation('ExecuteStatement', req)
+        # Do not try to retry http requests.
+        # Read queries should be idempotent but most dml queries are not. Also retrying
+        # query execution from client could be expensive and so likely makes sense to do
+        # it if server is also aware of the retries.
+        return self._operation('ExecuteStatement', req, False)
 
     def get_databases(self, schema='.*'):
         req = TGetSchemasReq(sessionHandle=self.handle, schemaName=schema)
-        return self._operation('GetSchemas', req)
+        return self._operation('GetSchemas', req, False)
 
     def get_tables(self, database='.*', table_like='.*'):
         req = TGetTablesReq(sessionHandle=self.handle,
                             schemaName=database,
                             tableName=table_like)
-        return self._operation('GetTables', req)
+        return self._operation('GetTables', req, False)
 
     def get_table_schema(self, table, database='.*'):
         req = TGetColumnsReq(sessionHandle=self.handle,
                              schemaName=database,
                              tableName=table, columnName='.*')
-        return self._operation('GetColumns', req)
+        return self._operation('GetColumns', req, False)
 
     def get_functions(self, database='.*'):
         # TODO: need to test this one especially
         req = TGetFunctionsReq(sessionHandle=self.handle,
                                schemaName=database,
                                functionName='.*')
-        return self._operation('GetFunctions', req)
+        return self._operation('GetFunctions', req, False)
 
     def database_exists(self, db_name):
         op = self.get_databases(schema=db_name)
@@ -1229,6 +1238,7 @@ class Operation(ThriftRPC):
     def get_status(self):
         # pylint: disable=protected-access
         req = TGetOperationStatusReq(operationHandle=self.handle)
+        # GetOperationStatus rpc is idempotent and so safe to retry.
         resp = self._rpc('GetOperationStatus', req, False)
         self.update_has_result_set(resp)
         return TOperationState._VALUES_TO_NAMES[resp.operationState]
@@ -1242,6 +1252,7 @@ class Operation(ThriftRPC):
     def get_log(self, max_rows=1024, orientation=TFetchOrientation.FETCH_NEXT):
         try:
             req = TGetLogReq(operationHandle=self.handle)
+            # GetLog rpc is idempotent and so safe to retry.
             log = self._rpc('GetLog', req, True).log
         except TApplicationException as e: # raised if Hive is used
             if not e.type == TApplicationException.UNKNOWN_METHOD:
@@ -1258,16 +1269,20 @@ class Operation(ThriftRPC):
 
     def cancel(self):
         req = TCancelOperationReq(operationHandle=self.handle)
+        # CancelOperation rpc is idempotent and so safe to retry.
         return self._rpc('CancelOperation', req, True)
 
     def close(self):
         req = TCloseOperationReq(operationHandle=self.handle)
+        # CloseImpalaOperation rpc is not idempotent for dml and we're not sure
+        # here if this is dml or not.
         return self._rpc('CloseOperation', req, False)
 
     def get_profile(self, profile_format=TRuntimeProfileFormat.STRING):
         req = TGetRuntimeProfileReq(operationHandle=self.handle,
                                     sessionHandle=self.session.handle,
                                     format=profile_format)
+        # GetRuntimeProfile rpc is idempotent and so safe to retry.
         resp = self._rpc('GetRuntimeProfile', req, True)
         if profile_format == TRuntimeProfileFormat.THRIFT:
             return resp.thrift_profile
@@ -1276,6 +1291,7 @@ class Operation(ThriftRPC):
     def get_summary(self):
         req = TGetExecSummaryReq(operationHandle=self.handle,
                                  sessionHandle=self.session.handle)
+        # GetExecSummary rpc is idempotent and so safe to retry.
         resp = self._rpc('GetExecSummary', req, True)
         return resp.summary
 
@@ -1293,6 +1309,8 @@ class Operation(ThriftRPC):
         req = TFetchResultsReq(operationHandle=self.handle,
                                orientation=orientation,
                                maxRows=max_rows)
+        # FetchResults rpc is not idempotent unless the client and server communicate and
+        # results are kept around for retry to be successful.
         resp = self._rpc('FetchResults', req, False)
         return self._wrap_results(resp.results, resp.hasMoreRows, schema,
                                   convert_types=convert_types)
