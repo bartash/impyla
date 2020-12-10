@@ -192,6 +192,19 @@ class TestHS2FaultInjection(object):
         con = self.connect()
         cur = con.cursor()
         cur.close()
+        assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
+
+    def test_connect_proxy_no_retry(self, caplog):
+        """Tests fault injection in ImpalaHS2Client's connect().
+        The injected error contains headers but no Retry-After header.
+        OpenSession rpcs fail.
+        Retries results in a successful connection."""
+        caplog.set_level(logging.DEBUG)
+        self.transport.enable_fault(503, "Injected Fault", 0.20, 'EXTRA',
+                                    {"header1": "value1"})
+        con = self.connect()
+        cur = con.cursor()
+        cur.close()
         print(caplog.text) # FIXME remove
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
