@@ -26,6 +26,65 @@ ENV = ImpylaTestEnv()
 from impala.dbapi import connect
 
 
+class FaultInjectingHttpClient(ImpalaHttpClient, object):
+    """Class for injecting faults in the ImpalaHttpClient. Faults are injected by using the
+    'enable_fault' method. The 'flush' method is overridden to check for injected faults
+    and raise exceptions, if needed."""
+    def __init__(self, *args, **kwargs):
+        super(FaultInjectingHttpClient, self).__init__(*args, **kwargs)
+        self.fault_code = None
+        self.fault_message = None
+        self.fault_enabled = False
+        self.num_requests = 0
+        self.fault_frequency = 0
+        self.fault_enabled = False
+
+    def enable_fault(self, http_code, http_message, fault_frequency, fault_body=None,
+                     fault_headers=None):
+        """Inject fault with given code and message at the given frequency.
+        As an example, if frequency is 20% then inject fault for 1 out of every 5
+        requests."""
+        if fault_headers is None:
+            fault_headers = {}
+        self.fault_enabled = True
+        self.fault_code = http_code
+        self.fault_message = http_message
+        self.fault_frequency = fault_frequency
+        assert fault_frequency > 0 and fault_frequency <= 1
+        self.num_requests = 0
+        self.fault_body = fault_body
+        self.fault_headers = fault_headers
+
+    def disable_fault(self):
+        self.fault_enabled = False
+
+    def _check_code(self):
+        if self.code >= 300:
+            # Report any http response code that is not 1XX (informational response) or
+            # 2XX (successful).
+            raise HttpError(self.code, self.message, self.body, self.headers)
+
+    def _inject_fault(self):
+        if not self.fault_enabled:
+            return False
+        if self.fault_frequency == 1:
+            return True
+        if round(self.num_requests % (1 / self.fault_frequency)) == 1:
+            return True
+        return False
+
+    def flush(self):
+        ImpalaHttpClient.flush(self)
+        self.num_requests += 1
+        # Override code and message with the injected fault
+        if self.fault_code is not None and self._inject_fault():
+            self.code = self.fault_code
+            self.message = self.fault_message
+            self.body = self.fault_body
+            self.headers = self.fault_headers
+            self._check_code()
+
+
 class TestHS2FaultInjection(object):
     """uses real connect function"""
     def test_old_simple_connect(self): # FIXME remove
