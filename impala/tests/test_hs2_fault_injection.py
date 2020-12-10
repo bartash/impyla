@@ -15,7 +15,7 @@ import six
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
 from impala import hiveserver2 as hs2
-from impala._thrift_api import get_http_transport, get_socket, get_transport, ThriftClient
+from impala._thrift_api import get_http_transport, get_socket, get_transport, ThriftClient, ImpalaHttpClient
 from impala._thrift_gen.ImpalaService import ImpalaHiveServer2Service
 from impala.error import NotSupportedError
 from impala.hiveserver2 import HS2Service, log
@@ -43,13 +43,15 @@ class TestHS2FaultInjection(object):
         assert rows == [(1,)]
 
     def _connect(self):
-        transport = get_http_transport("localhost", ENV.http_port, http_path="cliservice",
-                                       use_ssl=False, ca_cert=None,
-                                       auth_mechanism='NOSASL',
-                                       user=None, password=None,
-                                       kerberos_host="localhost",
-                                       kerberos_service_name='impala',
-                                       auth_cookie_names=['impala.auth', 'hive.server2.auth'])
+        # transport = get_http_transport("localhost", ENV.http_port, http_path="cliservice",
+        #                                use_ssl=False, ca_cert=None,
+        #                                auth_mechanism='NOSASL',
+        #                                user=None, password=None,
+        #                                kerberos_host="localhost",
+        #                                kerberos_service_name='impala',
+        #                                auth_cookie_names=['impala.auth', 'hive.server2.auth'])
+        url = 'http://%s:%s/%s' % ("localhost", ENV.http_port, "cliservice")
+        transport = ImpalaHttpClient(url)
         transport.open()
         protocol = TBinaryProtocol(transport)
         if six.PY2:
