@@ -36,29 +36,23 @@ class TestHS2FaultInjection(object):
         assert rows == [(1,)]
 
     def test_simple_connect(self):
-        con = self._connect()
+        con = self._connect("localhost", ENV.http_port)
         cur = con.cursor()
         cur.execute('select 1')
         rows = cur.fetchall()
         assert rows == [(1,)]
 
-    def _connect(self):
-        # transport = get_http_transport("localhost", ENV.http_port, http_path="cliservice",
-        #                                use_ssl=False, ca_cert=None,
-        #                                auth_mechanism='NOSASL',
-        #                                user=None, password=None,
-        #                                kerberos_host="localhost",
-        #                                kerberos_service_name='impala',
-        #                                auth_cookie_names=['impala.auth', 'hive.server2.auth'])
-        url = 'http://%s:%s/%s' % ("localhost", ENV.http_port, "cliservice")
+    def _connect(self, host, port):
+        url = 'http://%s:%s/%s' % (host, port, "cliservice")
         transport = ImpalaHttpClient(url)
         transport.open()
         protocol = TBinaryProtocol(transport)
+        service = None
         if six.PY2:
             # ThriftClient == ImpalaHiveServer2Service.Client
-            service1 = ThriftClient(protocol)
+            service = ThriftClient(protocol)
         elif six.PY3:
             # ThriftClient == TClient
-            service1 = ThriftClient(ImpalaHiveServer2Service, protocol)
-        service = HS2Service(service1, retries=3)
+            service = ThriftClient(ImpalaHiveServer2Service, protocol)
+        service = HS2Service(service, retries=3)
         return hs2.HiveServer2Connection(service, default_db=None)
