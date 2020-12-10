@@ -46,7 +46,7 @@ class ImpylaTestEnv(object):
         if http_port is not None:
             self.http_port = port
         else:
-            self.http_port = get_env_var('IMPYLA_TEST_HTTP_PORT', int, 21050)
+            self.http_port = get_env_var('IMPYLA_TEST_HTTP_PORT', int, 28000)
 
         if hive_port is not None:
             self.hive_port = hive_port
