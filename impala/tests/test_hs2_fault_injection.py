@@ -25,9 +25,6 @@ from impala.tests.util import ImpylaTestEnv
 
 ENV = ImpylaTestEnv()
 
-from impala.dbapi import connect
-
-
 class FaultInjectingHttpClient(ImpalaHttpClient, object):
     """Class for injecting faults in the ImpalaHttpClient. Faults are injected by using the
     'enable_fault' method. The 'flush' method is overridden to check for injected faults
@@ -151,29 +148,6 @@ class TestHS2FaultInjection(object):
         """Returns expected log message for rpcs which can not be retried"""
         return ("Caught HttpError HTTP code 502: Injected Fault  in {0} which is not retryable".
                 format(impala_rpc_name))
-
-
-    # def test_old_simple_connect(self): # FIXME remove
-    #     con = connect("localhost", ENV.http_port, use_http_transport=True, http_path="cliservice")
-    #     cur = con.cursor(configuration=self.configuration)
-    #     cur.execute('select 1')
-    #     rows = cur.fetchall()
-    #     assert rows == [(1,)]
-    #
-    # def test_new_simple_connect(self):
-    #     con = self._connect("localhost", ENV.http_port)
-    #     cur = con.cursor(configuration=self.configuration)
-    #     cur.execute('select 1')
-    #     rows = cur.fetchall()
-    #     assert rows == [(1,)]
-    #
-    # def test_class_connect_no_injection(self):
-    #     con = self.connect()
-    #     cur = con.cursor(configuration=self.configuration)
-    #     cur.execute('select 1')
-    #     rows = cur.fetchall()
-    #     assert rows == [(1,)]
-
 
     def test_connect(self, caplog):
         """Tests fault injection in ImpalaHS2Client's connect().
