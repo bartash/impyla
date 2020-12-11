@@ -208,6 +208,21 @@ class TestHS2FaultInjection(object):
         print(caplog.text) # FIXME remove
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
+    def test_connect_proxy_bad_retry(self, caplog):
+        """Tests fault injection in ImpalaHS2Client's connect().
+        The injected error contains a body and a junk Retry-After header.
+        OpenSession rpcs fail.
+        Retries results in a successful connection."""
+        caplog.set_level(logging.DEBUG)
+        self.transport.enable_fault(503, "Injected Fault", 0.20, 'EXTRA',
+                                    {"header1": "value1",
+                                     "Retry-After": "junk"})
+        con = self.connect()
+        cur = con.cursor()
+        cur.close()
+        print(caplog.text) # FIXME remove
+        assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
+
     def _connect(self, host, port):
         url = 'http://%s:%s/%s' % (host, port, "cliservice")
         transport = ImpalaHttpClient(url)
