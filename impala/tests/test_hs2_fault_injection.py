@@ -201,7 +201,8 @@ class TestHS2FaultInjection(object):
         self.transport.enable_fault(503, "Injected Fault", 0.20, 'EXTRA',
                                     {"header1": "value1"})
         con = self.connect()
-        cur = con.cursor()
+        # FIXME set this timeout other places
+        cur = con.cursor(configuration={'idle_session_timeout': '30'})
         cur.close()
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
@@ -243,8 +244,25 @@ class TestHS2FaultInjection(object):
         con = self.connect()
         cur = con.cursor()
         cur.close()
-        print(caplog.text) # FIXME remove
         assert self.__expect_msg_retry_with_retry_after_no_extra("OpenSession") in caplog.text
+
+    # This fails because fault injection happens after the message is sent
+    # so CloseSession cannot be repeated
+    # def test_close_connection(self, caplog):
+    #     """Tests fault injection in ImpalaHS2Client's close_connection().
+    #     CloseSession rpc fails due to the fault, but succeeds anyways since exceptions
+    #     are ignored."""
+    #     con = self.connect()
+    #     cur = con.cursor()
+    #     caplog.set_level(logging.DEBUG)
+    #     self.transport.enable_fault(502, "Injected Fault", 0.50)
+    #     cur.close()
+    #     # was self.custom_hs2_http_client.close_connection()
+    #
+    #     print(caplog.text) # FIXME remove
+    #     assert self.__expect_msg_no_retry("CloseSession") in caplog.text
+
+    # test_ping not ported as no ping command in impyla??
 
     def _connect(self, host, port):
         url = 'http://%s:%s/%s' % (host, port, "cliservice")
