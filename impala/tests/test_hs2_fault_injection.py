@@ -42,7 +42,7 @@ class FaultInjectingHttpClient(ImpalaHttpClient, object):
         self.fault_enabled = False
 
     def enable_fault(self, http_code, http_message, fault_frequency, fault_body=None,
-                     fault_headers=None):
+                     fault_headers=None, set_num_requests=None):
         """Inject fault with given code and message at the given frequency.
         As an example, if frequency is 20% then inject fault for 1 out of every 5
         requests."""
@@ -53,7 +53,10 @@ class FaultInjectingHttpClient(ImpalaHttpClient, object):
         self.fault_message = http_message
         self.fault_frequency = fault_frequency
         assert fault_frequency > 0 and fault_frequency <= 1
-        self.num_requests = 0
+        if set_num_requests is not None:
+            self.num_requests = set_num_requests
+        else:
+            self.num_requests = 0
         self.fault_body = fault_body
         self.fault_headers = fault_headers
 
@@ -71,6 +74,7 @@ class FaultInjectingHttpClient(ImpalaHttpClient, object):
             return False
         if self.fault_frequency == 1:
             return True
+        log.debug('INJECT num_req=%d, mod=%d', self.num_requests, (1 / self.fault_frequency)) # FIXME remove
         if round(self.num_requests % (1 / self.fault_frequency)) == 1:
             return True
         return False
@@ -93,6 +97,7 @@ class TestHS2FaultInjection(object):
     def setup(self):
         url = 'http://%s:%s/%s' % (ENV.host, ENV.http_port, "cliservice")
         self.transport = FaultInjectingHttpClient(url)
+        self.configuration = {'idle_session_timeout': '30'}
 
         # impalad = IMPALAD_HS2_HTTP_HOST_PORT.split(":")
         # self.custom_hs2_http_client = FaultInjectingImpalaHS2Client(impalad, 1024,
@@ -144,27 +149,27 @@ class TestHS2FaultInjection(object):
 
     def __expect_msg_no_retry(self, impala_rpc_name):
         """Returns expected log message for rpcs which can not be retried"""
-        return ("Caught exception HTTP code 502: Injected Fault, "
-                "type=<class 'shell.shell_exceptions.HttpError'> in {0}. ".format(impala_rpc_name))
+        return ("Caught HttpError HTTP code 502: Injected Fault  in {0} which is not retryable".
+                format(impala_rpc_name))
 
 
     def test_old_simple_connect(self): # FIXME remove
         con = connect("localhost", ENV.http_port, use_http_transport=True, http_path="cliservice")
-        cur = con.cursor()
+        cur = con.cursor(configuration=self.configuration)
         cur.execute('select 1')
         rows = cur.fetchall()
         assert rows == [(1,)]
 
     def test_new_simple_connect(self):
         con = self._connect("localhost", ENV.http_port)
-        cur = con.cursor()
+        cur = con.cursor(configuration=self.configuration)
         cur.execute('select 1')
         rows = cur.fetchall()
         assert rows == [(1,)]
 
     def test_class_connect_no_injection(self):
         con = self.connect()
-        cur = con.cursor()
+        cur = con.cursor(configuration=self.configuration)
         cur.execute('select 1')
         rows = cur.fetchall()
         assert rows == [(1,)]
@@ -176,7 +181,7 @@ class TestHS2FaultInjection(object):
         caplog.set_level(logging.DEBUG)
         self.transport.enable_fault(502, "Injected Fault", 0.2)
         con = self.connect()
-        cur = con.cursor()
+        cur = con.cursor(configuration=self.configuration)
         cur.close()
         assert self.__expect_msg_retry("OpenSession") in caplog.text
 
@@ -188,7 +193,7 @@ class TestHS2FaultInjection(object):
         caplog.set_level(logging.DEBUG)
         self.transport.enable_fault(503, "Injected Fault", 0.20, 'EXTRA')
         con = self.connect()
-        cur = con.cursor()
+        cur = con.cursor(configuration=self.configuration)
         cur.close()
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
@@ -202,7 +207,7 @@ class TestHS2FaultInjection(object):
                                     {"header1": "value1"})
         con = self.connect()
         # FIXME set this timeout other places
-        cur = con.cursor(configuration={'idle_session_timeout': '30'})
+        cur = con.cursor(configuration=self.configuration)
         cur.close()
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
@@ -216,7 +221,7 @@ class TestHS2FaultInjection(object):
                                     {"header1": "value1",
                                      "Retry-After": "junk"})
         con = self.connect()
-        cur = con.cursor()
+        cur = con.cursor(configuration=self.configuration)
         cur.close()
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
@@ -229,7 +234,7 @@ class TestHS2FaultInjection(object):
                                     {"header1": "value1",
                                      "Retry-After": "1"})
         con = self.connect()
-        cur = con.cursor()
+        cur = con.cursor(configuration=self.configuration)
         cur.close()
         assert self.__expect_msg_retry_with_retry_after("OpenSession") in caplog.text
 
@@ -242,7 +247,7 @@ class TestHS2FaultInjection(object):
                                     {"header1": "value1",
                                      "Retry-After": "1"})
         con = self.connect()
-        cur = con.cursor()
+        cur = con.cursor(configuration=self.configuration)
         cur.close()
         assert self.__expect_msg_retry_with_retry_after_no_extra("OpenSession") in caplog.text
 
@@ -253,7 +258,7 @@ class TestHS2FaultInjection(object):
     #     CloseSession rpc fails due to the fault, but succeeds anyways since exceptions
     #     are ignored."""
     #     con = self.connect()
-    #     cur = con.cursor()
+    #     cur = con.cursor(configuration=self.configuration)
     #     caplog.set_level(logging.DEBUG)
     #     self.transport.enable_fault(502, "Injected Fault", 0.50)
     #     cur.close()
@@ -268,7 +273,7 @@ class TestHS2FaultInjection(object):
         """Tests fault injection in ImpalaHS2Client's execute_query().
         ExecuteStatement rpc fails and results in error since retries are not supported."""
         con = self.connect()
-        cur = con.cursor()
+        cur = con.cursor(configuration=self.configuration)
         caplog.set_level(logging.DEBUG)
         self.transport.enable_fault(502, "Injected Fault", 0.50)
 
@@ -280,12 +285,13 @@ class TestHS2FaultInjection(object):
             assert str(e) == 'HTTP code 502: Injected Fault'
         assert query_handle is None
         cur.close()
+        assert self.__expect_msg_no_retry("ExecuteStatement") in caplog.text
 
     def test_get_operation_status(self, caplog):
         """Tests fault injection in fetchall().
         GetOperationStatus rpc fails and results in error since retries are not supported."""
         con = self.connect()
-        cur = con.cursor()
+        cur = con.cursor(configuration=self.configuration)
         caplog.set_level(logging.DEBUG)
         cur.execute('select 1', {})
         self.transport.enable_fault(502, "Injected Fault", 0.1)
@@ -296,14 +302,13 @@ class TestHS2FaultInjection(object):
             assert str(e) == 'HTTP code 502: Injected Fault'
         assert num_rows is None
         cur.close()
-        print(caplog.text) # FIXME remove
         assert self.__expect_msg_retry("GetOperationStatus") in caplog.text
 
     def test_get_result_set_metadata(self, caplog):
         """Tests fault injection in fetchcbatch().
         GetResultSetMetadata rpc fails and is retried succesfully."""
         con = self.connect()
-        cur = con.cursor()
+        cur = con.cursor(configuration=self.configuration)
         caplog.set_level(logging.DEBUG)
         cur.execute('select 1', {})
         self.transport.enable_fault(502, "Injected Fault", 0.1)
@@ -314,8 +319,26 @@ class TestHS2FaultInjection(object):
             assert str(e) == 'HTTP code 502: Injected Fault'
         assert num_rows is None
         cur.close()
-        print(caplog.text) # FIXME remove
         assert self.__expect_msg_retry("GetResultSetMetadata") in caplog.text
+
+    def test_fetch_results(self, caplog):
+        """Tests fault injection in fetchcbatch().
+        GetResultSetMetadata rpc fails and is retried succesfully."""
+        con = self.connect()
+        cur = con.cursor(configuration=self.configuration)
+        caplog.set_level(logging.DEBUG)
+        cur.execute('select 1', {})
+        num_rows = None
+        try:
+            log.debug("enebale fault")
+            self.transport.enable_fault(502, "Injected Fault", 0.5, set_num_requests=1)
+            cur.fetchcbatch()
+        except HttpError as e:
+            assert str(e) == 'HTTP code 502: Injected Fault'
+        assert num_rows is None
+        # cur.close()
+        print(caplog.text) # FIXME remove
+        assert self.__expect_msg_no_retry("FetchResults") in caplog.text
 
 
     def _connect(self, host, port):

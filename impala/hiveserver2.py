@@ -1023,6 +1023,7 @@ class ThriftRPC(object):
                 open_transport(transport)
                 log.debug('Transport opened')
                 func = getattr(self.client, func_name)
+                log.debug('YYY run %s', func_name)
                 return func(request)
             except socket.error:
                 log.exception('Failed to open transport (tries_left=%s)',
@@ -1034,6 +1035,8 @@ class ThriftRPC(object):
                 last_http_exception = None
             except HttpError as h:
                 if not retry_on_http_error:
+                    log.debug('Caught HttpError %s %s in %s which is not retryable',
+                              h, str(h.body or ''), func_name)
                     raise
                 last_http_exception = h
                 log.info('XXX Caught %s [%s] (tries_left=%s)', h, h.body, tries_left) # FIXME remove
