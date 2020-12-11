@@ -264,6 +264,25 @@ class TestHS2FaultInjection(object):
 
     # test_ping not ported as no ping command in impyla??
 
+    def test_execute_query(self, caplog):
+        """Tests fault injection in ImpalaHS2Client's execute_query().
+        ExecuteStatement rpc fails and results in error since retries are not supported."""
+        con = self.connect()
+        cur = con.cursor()
+        caplog.set_level(logging.DEBUG)
+        self.transport.enable_fault(502, "Injected Fault", 0.50)
+
+        query_handle = None
+        try:
+            query_handle = cur.execute('select 1')
+            assert False, 'execute should have failed'
+        except HttpError as e:
+            assert str(e) == 'HTTP code 502: Injected Fault'
+        assert query_handle is None
+        print(caplog.text) # FIXME remove
+        cur.close() # ???
+
+
     def _connect(self, host, port):
         url = 'http://%s:%s/%s' % (host, port, "cliservice")
         transport = ImpalaHttpClient(url)
