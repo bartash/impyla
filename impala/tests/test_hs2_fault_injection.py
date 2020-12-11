@@ -139,9 +139,8 @@ class TestHS2FaultInjection(object):
     def __expect_msg_retry_with_retry_after_no_extra(self, impala_rpc_name):
         """Returns expected log message for rpcs which can be retried and the http
         message has a Retry-After header that can be correctly decoded"""
-        return ("Caught exception HTTP code 503: Injected Fault, "
-                "type=<class 'shell.shell_exceptions.HttpError'> in {0}. "
-                "Num remaining tries: 3, retry after 1 secs".format(impala_rpc_name))
+        return ("Caught HttpError HTTP code 503: Injected Fault  in {0} (tries_left=3), retry after 1 secs".
+                format(impala_rpc_name))
 
     def __expect_msg_no_retry(self, impala_rpc_name):
         """Returns expected log message for rpcs which can not be retried"""
@@ -231,8 +230,21 @@ class TestHS2FaultInjection(object):
         con = self.connect()
         cur = con.cursor()
         cur.close()
-        print(caplog.text) # FIXME remove
         assert self.__expect_msg_retry_with_retry_after("OpenSession") in caplog.text
+
+    def test_connect_proxy_retry_no_body(self, caplog):
+        """Tests fault injection in ImpalaHS2Client's connect().
+        The injected error has no body but does have a Retry-After header that can be decoded.
+        Retries results in a successful connection."""
+        caplog.set_level(logging.DEBUG)
+        self.transport.enable_fault(503, "Injected Fault", 0.20, None,
+                                    {"header1": "value1",
+                                     "Retry-After": "1"})
+        con = self.connect()
+        cur = con.cursor()
+        cur.close()
+        print(caplog.text) # FIXME remove
+        assert self.__expect_msg_retry_with_retry_after_no_extra("OpenSession") in caplog.text
 
     def _connect(self, host, port):
         url = 'http://%s:%s/%s' % (host, port, "cliservice")
