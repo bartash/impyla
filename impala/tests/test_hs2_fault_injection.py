@@ -153,26 +153,27 @@ class TestHS2FaultInjection(object):
                 format(impala_rpc_name))
 
 
-    def test_old_simple_connect(self): # FIXME remove
-        con = connect("localhost", ENV.http_port, use_http_transport=True, http_path="cliservice")
-        cur = con.cursor(configuration=self.configuration)
-        cur.execute('select 1')
-        rows = cur.fetchall()
-        assert rows == [(1,)]
+    # def test_old_simple_connect(self): # FIXME remove
+    #     con = connect("localhost", ENV.http_port, use_http_transport=True, http_path="cliservice")
+    #     cur = con.cursor(configuration=self.configuration)
+    #     cur.execute('select 1')
+    #     rows = cur.fetchall()
+    #     assert rows == [(1,)]
+    #
+    # def test_new_simple_connect(self):
+    #     con = self._connect("localhost", ENV.http_port)
+    #     cur = con.cursor(configuration=self.configuration)
+    #     cur.execute('select 1')
+    #     rows = cur.fetchall()
+    #     assert rows == [(1,)]
+    #
+    # def test_class_connect_no_injection(self):
+    #     con = self.connect()
+    #     cur = con.cursor(configuration=self.configuration)
+    #     cur.execute('select 1')
+    #     rows = cur.fetchall()
+    #     assert rows == [(1,)]
 
-    def test_new_simple_connect(self):
-        con = self._connect("localhost", ENV.http_port)
-        cur = con.cursor(configuration=self.configuration)
-        cur.execute('select 1')
-        rows = cur.fetchall()
-        assert rows == [(1,)]
-
-    def test_class_connect_no_injection(self):
-        con = self.connect()
-        cur = con.cursor(configuration=self.configuration)
-        cur.execute('select 1')
-        rows = cur.fetchall()
-        assert rows == [(1,)]
 
     def test_connect(self, caplog):
         """Tests fault injection in ImpalaHS2Client's connect().
@@ -183,6 +184,7 @@ class TestHS2FaultInjection(object):
         con = self.connect()
         cur = con.cursor(configuration=self.configuration)
         cur.close()
+        con.close()
         assert self.__expect_msg_retry("OpenSession") in caplog.text
 
     def test_connect_proxy(self, caplog):
@@ -195,6 +197,7 @@ class TestHS2FaultInjection(object):
         con = self.connect()
         cur = con.cursor(configuration=self.configuration)
         cur.close()
+        con.close()
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
     def test_connect_proxy_no_retry(self, caplog):
@@ -209,6 +212,7 @@ class TestHS2FaultInjection(object):
         # FIXME set this timeout other places
         cur = con.cursor(configuration=self.configuration)
         cur.close()
+        con.close()
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
     def test_connect_proxy_bad_retry(self, caplog):
@@ -223,6 +227,7 @@ class TestHS2FaultInjection(object):
         con = self.connect()
         cur = con.cursor(configuration=self.configuration)
         cur.close()
+        con.close()
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
     def test_connect_proxy_retry(self, caplog):
@@ -236,6 +241,7 @@ class TestHS2FaultInjection(object):
         con = self.connect()
         cur = con.cursor(configuration=self.configuration)
         cur.close()
+        con.close()
         assert self.__expect_msg_retry_with_retry_after("OpenSession") in caplog.text
 
     def test_connect_proxy_retry_no_body(self, caplog):
@@ -249,6 +255,7 @@ class TestHS2FaultInjection(object):
         con = self.connect()
         cur = con.cursor(configuration=self.configuration)
         cur.close()
+        con.close()
         assert self.__expect_msg_retry_with_retry_after_no_extra("OpenSession") in caplog.text
 
     # This fails because fault injection happens after the message is sent
@@ -285,6 +292,7 @@ class TestHS2FaultInjection(object):
             assert str(e) == 'HTTP code 502: Injected Fault'
         assert query_handle is None
         cur.close()
+        con.close()
         assert self.__expect_msg_no_retry("ExecuteStatement") in caplog.text
 
     def test_get_operation_status(self, caplog):
@@ -297,6 +305,7 @@ class TestHS2FaultInjection(object):
         self.transport.enable_fault(502, "Injected Fault", 0.1)
         cur.fetchall()
         cur.close()
+        con.close()
         assert self.__expect_msg_retry("GetOperationStatus") in caplog.text
 
     def test_get_result_set_metadata(self, caplog):
@@ -309,6 +318,7 @@ class TestHS2FaultInjection(object):
         self.transport.enable_fault(502, "Injected Fault", 0.1)
         cur.fetchcbatch()
         cur.close()
+        con.close()
         assert self.__expect_msg_retry("GetResultSetMetadata") in caplog.text
 
     def test_fetch_results(self, caplog):
@@ -326,6 +336,7 @@ class TestHS2FaultInjection(object):
             assert str(e) == 'HTTP code 502: Injected Fault'
         self.transport.disable_fault()
         cur.close()
+        con.close()
         assert self.__expect_msg_no_retry("FetchResults") in caplog.text
 
 
@@ -344,6 +355,7 @@ class TestHS2FaultInjection(object):
             assert str(e) == 'HTTP code 502: Injected Fault'
         self.transport.disable_fault()
         cur.close()
+        con.close()
         print(caplog.text) # FIXME remove
         assert self.__expect_msg_no_retry("CloseOperation") in caplog.text
 
