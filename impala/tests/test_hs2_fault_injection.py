@@ -281,9 +281,9 @@ class TestHS2FaultInjection(object):
         assert query_handle is None
         cur.close()
 
-    def test_fetch(self, caplog):
-        """Tests fault injection in ImpalaHS2Client's fetch().
-        FetchResults rpc fails and results in error since retries are not supported."""
+    def test_get_operation_status(self, caplog):
+        """Tests fault injection in fetchall().
+        GetOperationStatus rpc fails and results in error since retries are not supported."""
         con = self.connect()
         cur = con.cursor()
         caplog.set_level(logging.DEBUG)
@@ -297,7 +297,25 @@ class TestHS2FaultInjection(object):
         assert num_rows is None
         cur.close()
         print(caplog.text) # FIXME remove
-        assert self.__expect_msg_no_retry("FetchResults") in caplog.text
+        assert self.__expect_msg_retry("GetOperationStatus") in caplog.text
+
+    def test_get_result_set_metadata(self, caplog):
+        """Tests fault injection in fetchcbatch().
+        GetResultSetMetadata rpc fails and is retried succesfully."""
+        con = self.connect()
+        cur = con.cursor()
+        caplog.set_level(logging.DEBUG)
+        cur.execute('select 1', {})
+        self.transport.enable_fault(502, "Injected Fault", 0.1)
+        num_rows = None
+        try:
+            cur.fetchcbatch()
+        except HttpError as e:
+            assert str(e) == 'HTTP code 502: Injected Fault'
+        assert num_rows is None
+        cur.close()
+        print(caplog.text) # FIXME remove
+        assert self.__expect_msg_retry("GetResultSetMetadata") in caplog.text
 
 
     def _connect(self, host, port):
