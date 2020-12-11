@@ -318,17 +318,34 @@ class TestHS2FaultInjection(object):
         cur = con.cursor(configuration=self.configuration)
         caplog.set_level(logging.DEBUG)
         cur.execute('select 1', {})
-        num_rows = None
         try:
             self.transport.enable_fault(502, "Injected Fault", 0.5, set_num_requests=1)
             cur.fetchcbatch()
             assert False, 'should see exception'
         except HttpError as e:
             assert str(e) == 'HTTP code 502: Injected Fault'
-        assert num_rows is None
-        # cur.close()
-        print(caplog.text) # FIXME remove
+        self.transport.disable_fault()
+        cur.close()
         assert self.__expect_msg_no_retry("FetchResults") in caplog.text
+
+
+    def test_close_operation(self, caplog):
+        """Tests fault injection in fetchcbatch().
+        GetResultSetMetadata rpc fails and is retried succesfully."""
+        con = self.connect()
+        cur = con.cursor(configuration=self.configuration)
+        caplog.set_level(logging.DEBUG)
+        cur.execute('select 1', {})
+        cur.fetchcbatch()
+        try:
+            self.transport.enable_fault(502, "Injected Fault", 0.5)
+            cur.close()
+        except HttpError as e:
+            assert str(e) == 'HTTP code 502: Injected Fault'
+        self.transport.disable_fault()
+        cur.close()
+        print(caplog.text) # FIXME remove
+        assert self.__expect_msg_no_retry("CloseOperation") in caplog.text
 
 
     def _connect(self, host, port):
