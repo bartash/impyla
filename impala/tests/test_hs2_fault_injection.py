@@ -295,12 +295,7 @@ class TestHS2FaultInjection(object):
         caplog.set_level(logging.DEBUG)
         cur.execute('select 1', {})
         self.transport.enable_fault(502, "Injected Fault", 0.1)
-        num_rows = None
-        try:
-            cur.fetchall()
-        except HttpError as e:
-            assert str(e) == 'HTTP code 502: Injected Fault'
-        assert num_rows is None
+        cur.fetchall()
         cur.close()
         assert self.__expect_msg_retry("GetOperationStatus") in caplog.text
 
@@ -312,12 +307,7 @@ class TestHS2FaultInjection(object):
         caplog.set_level(logging.DEBUG)
         cur.execute('select 1', {})
         self.transport.enable_fault(502, "Injected Fault", 0.1)
-        num_rows = None
-        try:
-            cur.fetchcbatch()
-        except HttpError as e:
-            assert str(e) == 'HTTP code 502: Injected Fault'
-        assert num_rows is None
+        cur.fetchcbatch()
         cur.close()
         assert self.__expect_msg_retry("GetResultSetMetadata") in caplog.text
 
