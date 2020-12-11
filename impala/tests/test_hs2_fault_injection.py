@@ -330,9 +330,9 @@ class TestHS2FaultInjection(object):
         cur.execute('select 1', {})
         num_rows = None
         try:
-            log.debug("enebale fault")
             self.transport.enable_fault(502, "Injected Fault", 0.5, set_num_requests=1)
             cur.fetchcbatch()
+            assert False, 'should see exception'
         except HttpError as e:
             assert str(e) == 'HTTP code 502: Injected Fault'
         assert num_rows is None
