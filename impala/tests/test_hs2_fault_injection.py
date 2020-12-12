@@ -249,6 +249,7 @@ class TestHS2FaultInjection(object):
     #     assert self.__expect_msg_no_retry("CloseSession") in caplog.text
 
     # test_ping not ported as no ping command in impyla??
+    # test_cancel_query not ported as no cancel command in impyla??
 
     def test_execute_query(self, caplog):
         """Tests fault injection in ImpalaHS2Client's execute_query().
@@ -269,7 +270,7 @@ class TestHS2FaultInjection(object):
         con.close()
         assert self.__expect_msg_no_retry("ExecuteStatement") in caplog.text
 
-    def test_get_operation_status(self, caplog):
+    def test_get_query_state(self, caplog):
         """Tests fault injection in fetchall().
         GetOperationStatus rpc fails and results in error since retries are not supported."""
         con = self.connect()
