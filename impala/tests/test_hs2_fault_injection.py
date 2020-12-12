@@ -334,6 +334,27 @@ class TestHS2FaultInjection(object):
         print(caplog.text) # FIXME remove
         assert self.__expect_msg_no_retry("CloseOperation") in caplog.text
 
+    def test_get_runtime_profile_summary(self, caplog):
+        """Tests fault injection in ImpalaHS2Client's get_runtime_profile().
+        GetRuntimeProfile and GetExecSummary rpc fails due to fault, but succeeds
+        after a retry"""
+        con = self.connect()
+        cur = con.cursor(configuration=self.configuration)
+        caplog.set_level(logging.DEBUG)
+        cur.execute('select 1', {})
+        cur.fetchcbatch()
+        self.transport.enable_fault(502, "Injected Fault", 0.50)
+        profile = cur.get_profile()
+        assert profile is not None
+        summary = cur.get_summary()
+        assert summary is not None
+        self.transport.disable_fault()
+        cur.close()
+        con.close()
+        assert self.__expect_msg_retry("GetRuntimeProfile") in caplog.text
+        assert self.__expect_msg_retry("GetExecSummary") in caplog.text
+
+
 
     def _connect(self, host, port):
         url = 'http://%s:%s/%s' % (host, port, "cliservice")
