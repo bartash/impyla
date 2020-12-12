@@ -331,7 +331,6 @@ class TestHS2FaultInjection(object):
         self.transport.disable_fault()
         cur.close()
         con.close()
-        print(caplog.text) # FIXME remove
         assert self.__expect_msg_no_retry("CloseOperation") in caplog.text
 
     def test_get_runtime_profile_summary(self, caplog):
@@ -348,11 +347,15 @@ class TestHS2FaultInjection(object):
         assert profile is not None
         summary = cur.get_summary()
         assert summary is not None
+        ret_log = cur.get_log()
+        assert ret_log is not None
         self.transport.disable_fault()
         cur.close()
         con.close()
+        print(caplog.text) # FIXME remove
         assert self.__expect_msg_retry("GetRuntimeProfile") in caplog.text
         assert self.__expect_msg_retry("GetExecSummary") in caplog.text
+        assert self.__expect_msg_retry("GetLog") in caplog.text
 
 
 
