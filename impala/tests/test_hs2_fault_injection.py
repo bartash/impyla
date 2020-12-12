@@ -224,7 +224,7 @@ class TestHS2FaultInjection(object):
         assert self.__expect_msg_retry_with_retry_after_no_extra("OpenSession") in caplog.text
 
     def test_execute_query(self, caplog):
-        """Tests fault injection in execute_query().
+        """Tests fault injection in execute().
         ExecuteStatement rpc fails and results in error since retries are not supported."""
         con = self.connect()
         cur = con.cursor(configuration=self.configuration)
@@ -289,7 +289,7 @@ class TestHS2FaultInjection(object):
 
     def test_close_operation(self, caplog):
         """Tests fault injection in fetchcbatch().
-        GetResultSetMetadata rpc fails and is retried succesfully."""
+        GetResultSetMetadata rpc fails and is retried successfully."""
         con = self.connect()
         cur = con.cursor(configuration=self.configuration)
         caplog.set_level(logging.DEBUG)
@@ -306,9 +306,9 @@ class TestHS2FaultInjection(object):
         assert self.__expect_msg_no_retry("CloseOperation") in caplog.text
 
     def test_get_runtime_profile_summary(self, caplog):
-        """Tests fault injection in get_runtime_profile().
-        GetRuntimeProfile, GetExecSummary and GetLog rpc fails due to fault, but succeeds
-        after a retry"""
+        """Tests fault injection in get_profile(), get_summary(), and get_log().
+        GetRuntimeProfile, GetExecSummary and GetLog rpcs fail due to fault, but succeed
+        after retries"""
         con = self.connect()
         cur = con.cursor(configuration=self.configuration)
         caplog.set_level(logging.DEBUG)
@@ -331,17 +331,3 @@ class TestHS2FaultInjection(object):
 
 
 
-    def _connect(self, host, port):
-        url = 'http://%s:%s/%s' % (host, port, "cliservice")
-        transport = ImpalaHttpClient(url)
-        transport.open()
-        protocol = TBinaryProtocol(transport)
-        service = None
-        if six.PY2:
-            # ThriftClient == ImpalaHiveServer2Service.Client
-            service = ThriftClient(protocol)
-        elif six.PY3:
-            # ThriftClient == TClient
-            service = ThriftClient(ImpalaHiveServer2Service, protocol)
-        service = HS2Service(service, retries=3)
-        return hs2.HiveServer2Connection(service, default_db=None)
