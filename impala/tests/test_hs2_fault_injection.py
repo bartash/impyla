@@ -17,9 +17,9 @@ import six
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
 from impala import hiveserver2 as hs2
-from impala._thrift_api import get_http_transport, get_socket, get_transport, ThriftClient, ImpalaHttpClient
+from impala._thrift_api import ThriftClient, ImpalaHttpClient
 from impala._thrift_gen.ImpalaService import ImpalaHiveServer2Service
-from impala.error import NotSupportedError, HttpError
+from impala.error import HttpError
 from impala.hiveserver2 import HS2Service, log
 from impala.tests.util import ImpylaTestEnv
 
