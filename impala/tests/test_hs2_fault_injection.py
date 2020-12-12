@@ -335,7 +335,7 @@ class TestHS2FaultInjection(object):
 
     def test_get_runtime_profile_summary(self, caplog):
         """Tests fault injection in ImpalaHS2Client's get_runtime_profile().
-        GetRuntimeProfile and GetExecSummary rpc fails due to fault, but succeeds
+        GetRuntimeProfile, GetExecSummary and GetLog rpc fails due to fault, but succeeds
         after a retry"""
         con = self.connect()
         cur = con.cursor(configuration=self.configuration)
