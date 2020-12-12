@@ -91,21 +91,14 @@ class FaultInjectingHttpClient(ImpalaHttpClient, object):
 
 
 class TestHS2FaultInjection(object):
-    """Class for testing the http fault injection in various rpcs used by the
-    impala-shell client"""
+    """Class for testing the http fault injection in various rpcs used by Impyla"""
     def setup(self):
         url = 'http://%s:%s/%s' % (ENV.host, ENV.http_port, "cliservice")
         self.transport = FaultInjectingHttpClient(url)
         self.configuration = {'idle_session_timeout': '30'}
 
-        # impalad = IMPALAD_HS2_HTTP_HOST_PORT.split(":")
-        # self.custom_hs2_http_client = FaultInjectingImpalaHS2Client(impalad, 1024,
-        #                                                             kerberos_host_fqdn=None, use_http_base_transport=True, http_path='cliservice')
-        # self.transport = self.custom_hs2_http_client.transport
-
     def teardown(self):
         self.transport.disable_fault()
-        # self.custom_hs2_http_client.close_connection()
 
     def connect(self):
         self.transport.open()
@@ -118,10 +111,7 @@ class TestHS2FaultInjection(object):
             # ThriftClient == TClient
             service = ThriftClient(ImpalaHiveServer2Service, protocol)
         service = HS2Service(service, retries=3)
-        self.xservice = service # FIXME do we need this?
         return hs2.HiveServer2Connection(service, default_db=None)
-        # self.custom_hs2_http_client.connect()
-        # assert self.custom_hs2_http_client.connected
 
     def __expect_msg_retry(self, impala_rpc_name):
         """Returns expected log message for rpcs which can be retried"""
@@ -152,8 +142,8 @@ class TestHS2FaultInjection(object):
                 format(impala_rpc_name))
 
     def test_connect(self, caplog):
-        """Tests fault injection in ImpalaHS2Client's connect().
-        OpenSession rpcs fail.
+        """Tests fault injection in connect().
+        OpenSession rpc fails.
         Retries results in a successful connection."""
         caplog.set_level(logging.DEBUG)
         self.transport.enable_fault(502, "Injected Fault", 0.2)
@@ -164,9 +154,9 @@ class TestHS2FaultInjection(object):
         assert self.__expect_msg_retry("OpenSession") in caplog.text
 
     def test_connect_proxy(self, caplog):
-        """Tests fault injection in ImpalaHS2Client's connect().
+        """Tests fault injection in connect().
         The injected error has a message body.
-        OpenSession rpcs fail.
+        OpenSession rpc fails.
         Retries results in a successful connection."""
         caplog.set_level(logging.DEBUG)
         self.transport.enable_fault(503, "Injected Fault", 0.20, 'EXTRA')
@@ -177,24 +167,23 @@ class TestHS2FaultInjection(object):
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
     def test_connect_proxy_no_retry(self, caplog):
-        """Tests fault injection in ImpalaHS2Client's connect().
+        """Tests fault injection in connect().
         The injected error contains headers but no Retry-After header.
-        OpenSession rpcs fail.
+        OpenSession rpc fails.
         Retries results in a successful connection."""
         caplog.set_level(logging.DEBUG)
         self.transport.enable_fault(503, "Injected Fault", 0.20, 'EXTRA',
                                     {"header1": "value1"})
         con = self.connect()
-        # FIXME set this timeout other places
         cur = con.cursor(configuration=self.configuration)
         cur.close()
         con.close()
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
     def test_connect_proxy_bad_retry(self, caplog):
-        """Tests fault injection in ImpalaHS2Client's connect().
+        """Tests fault injection in connect().
         The injected error contains a body and a junk Retry-After header.
-        OpenSession rpcs fail.
+        OpenSession rpc fails.
         Retries results in a successful connection."""
         caplog.set_level(logging.DEBUG)
         self.transport.enable_fault(503, "Injected Fault", 0.20, 'EXTRA',
@@ -207,7 +196,7 @@ class TestHS2FaultInjection(object):
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
 
     def test_connect_proxy_retry(self, caplog):
-        """Tests fault injection in ImpalaHS2Client's connect().
+        """Tests fault injection in connect().
         The injected error contains a body and a Retry-After header that can be decoded.
         Retries results in a successful connection."""
         caplog.set_level(logging.DEBUG)
@@ -221,7 +210,7 @@ class TestHS2FaultInjection(object):
         assert self.__expect_msg_retry_with_retry_after("OpenSession") in caplog.text
 
     def test_connect_proxy_retry_no_body(self, caplog):
-        """Tests fault injection in ImpalaHS2Client's connect().
+        """Tests fault injection in connect().
         The injected error has no body but does have a Retry-After header that can be decoded.
         Retries results in a successful connection."""
         caplog.set_level(logging.DEBUG)
@@ -234,27 +223,8 @@ class TestHS2FaultInjection(object):
         con.close()
         assert self.__expect_msg_retry_with_retry_after_no_extra("OpenSession") in caplog.text
 
-    # This fails because fault injection happens after the message is sent
-    # so CloseSession cannot be repeated
-    # def test_close_connection(self, caplog):
-    #     """Tests fault injection in ImpalaHS2Client's close_connection().
-    #     CloseSession rpc fails due to the fault, but succeeds anyways since exceptions
-    #     are ignored."""
-    #     con = self.connect()
-    #     cur = con.cursor(configuration=self.configuration)
-    #     caplog.set_level(logging.DEBUG)
-    #     self.transport.enable_fault(502, "Injected Fault", 0.50)
-    #     cur.close()
-    #     # was self.custom_hs2_http_client.close_connection()
-    #
-    #     print(caplog.text) # FIXME remove
-    #     assert self.__expect_msg_no_retry("CloseSession") in caplog.text
-
-    # test_ping not ported as no ping command in impyla??
-    # test_cancel_query not ported as no cancel command in impyla??
-
     def test_execute_query(self, caplog):
-        """Tests fault injection in ImpalaHS2Client's execute_query().
+        """Tests fault injection in execute_query().
         ExecuteStatement rpc fails and results in error since retries are not supported."""
         con = self.connect()
         cur = con.cursor(configuration=self.configuration)
@@ -336,7 +306,7 @@ class TestHS2FaultInjection(object):
         assert self.__expect_msg_no_retry("CloseOperation") in caplog.text
 
     def test_get_runtime_profile_summary(self, caplog):
-        """Tests fault injection in ImpalaHS2Client's get_runtime_profile().
+        """Tests fault injection in get_runtime_profile().
         GetRuntimeProfile, GetExecSummary and GetLog rpc fails due to fault, but succeeds
         after a retry"""
         con = self.connect()
