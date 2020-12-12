@@ -25,6 +25,8 @@ from impala.tests.util import ImpylaTestEnv
 
 ENV = ImpylaTestEnv()
 
+# This code is based on https://github.com/apache/impala/blob/master/tests/custom_cluster/test_hs2_fault_injection.py
+
 class FaultInjectingHttpClient(ImpalaHttpClient, object):
     """Class for injecting faults in the ImpalaHttpClient. Faults are injected by using the
     'enable_fault' method. The 'flush' method is overridden to check for injected faults
