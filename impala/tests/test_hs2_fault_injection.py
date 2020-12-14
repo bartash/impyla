@@ -14,11 +14,31 @@
 import logging
 
 import six
+
+if six.PY2:
+    from thrift.protocol.TBinaryProtocol import (
+        TBinaryProtocolAccelerated as TBinaryProtocol)
+    from impala._thrift_gen.ImpalaService.ImpalaHiveServer2Service import (
+        TGetRuntimeProfileReq, TGetExecSummaryReq)
+    from impala._thrift_gen.ImpalaService import ImpalaHiveServer2Service
+    ThriftClient = ImpalaHiveServer2Service.Client
+
+
+if six.PY3:
+    # When using python 3, import from thriftpy2 rather than thrift
+    from thriftpy2 import load
+    from thriftpy2.thrift import TClient, TApplicationException
+    # TODO: reenable cython
+    # from thriftpy2.protocol import TBinaryProtocol
+    from thriftpy2.protocol.binary import TBinaryProtocol  # noqa
+    from thriftpy2.transport import (TSocket, TTransportException, TTransportBase) # noqa
+    from thriftpy2.transport.buffered import TBufferedTransport  # noqa
+
+
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
 from impala import hiveserver2 as hs2
 from impala._thrift_api import ThriftClient, ImpalaHttpClient
-from impala._thrift_gen.ImpalaService import ImpalaHiveServer2Service
 from impala.error import HttpError
 from impala.hiveserver2 import HS2Service, log
 from impala.tests.util import ImpylaTestEnv
