@@ -35,6 +35,17 @@ if six.PY3:
     from thriftpy2.transport.buffered import TBufferedTransport  # noqa
 
 
+from impala._thrift_api import (
+    get_socket, get_http_transport, get_transport, TTransportException, TBinaryProtocol, TOpenSessionReq,
+    TFetchResultsReq,
+    TCloseSessionReq, TExecuteStatementReq, TGetInfoReq, TGetInfoType, TTypeId,
+    TFetchOrientation, TGetResultSetMetadataReq, TStatusCode, TGetColumnsReq,
+    TGetSchemasReq, TGetTablesReq, TGetFunctionsReq, TGetOperationStatusReq,
+    TOperationState, TCancelOperationReq, TCloseOperationReq, TGetLogReq,
+    TProtocolVersion, TGetRuntimeProfileReq, TRuntimeProfileFormat,
+    TGetExecSummaryReq, ImpalaHiveServer2Service, TExecStats, ThriftClient,
+    TApplicationException)
+
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
 from impala import hiveserver2 as hs2
