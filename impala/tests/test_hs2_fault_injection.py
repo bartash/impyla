@@ -140,8 +140,11 @@ class TestHS2FaultInjection(object):
             service = ThriftClient(protocol)
         elif six.PY3:
             # ThriftClient == TClient
+            # service = ThriftClient(protocol)
             service = ThriftClient(ImpalaHiveServer2Service, protocol)
+            self.s1 = service #  FIXME remove
         service = HS2Service(service, retries=3)
+        self.s2 = service # FIXME remove
         return hs2.HiveServer2Connection(service, default_db=None)
 
     def __expect_msg_retry(self, impala_rpc_name):
