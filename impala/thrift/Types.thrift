@@ -30,6 +30,7 @@ typedef i32 TDataSinkId
 typedef i32 TTupleId
 typedef i32 TSlotId
 typedef i32 TTableId
+typedef i32 TJoinTableId
 
 // TODO: Consider moving unrelated enums to better locations.
 
@@ -152,9 +153,6 @@ struct TUniqueId {
   2: required i64 lo
 }
 
-// Used to uniquely identify individual impalads.
-typedef TUniqueId TBackendId;
-
 enum TFunctionCategory {
   SCALAR = 0
   AGGREGATE = 1
@@ -266,10 +264,4 @@ struct TFunction {
 
   // NOTE: when adding fields to this struct, do not renumber the field IDs or
   // add new required fields. This struct is serialized into user metastores.
-}
-
-// The sorting order used in SORT BY queries.
-enum TSortingOrder {
-  LEXICAL = 0
-  ZORDER = 1
 }

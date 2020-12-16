@@ -164,7 +164,6 @@ class TPlanNodeExecSummary(object):
    - estimated_stats
    - exec_stats
    - is_broadcast
-   - num_hosts
   """
 
   thrift_spec = (
@@ -177,10 +176,9 @@ class TPlanNodeExecSummary(object):
     (6, TType.STRUCT, 'estimated_stats', (TExecStats, TExecStats.thrift_spec), None, ), # 6
     (7, TType.LIST, 'exec_stats', (TType.STRUCT,(TExecStats, TExecStats.thrift_spec)), None, ), # 7
     (8, TType.BOOL, 'is_broadcast', None, None, ), # 8
-    (9, TType.I32, 'num_hosts', None, None, ), # 9
   )
 
-  def __init__(self, node_id=None, fragment_idx=None, label=None, label_detail=None, num_children=None, estimated_stats=None, exec_stats=None, is_broadcast=None, num_hosts=None,):
+  def __init__(self, node_id=None, fragment_idx=None, label=None, label_detail=None, num_children=None, estimated_stats=None, exec_stats=None, is_broadcast=None,):
     self.node_id = node_id
     self.fragment_idx = fragment_idx
     self.label = label
@@ -189,7 +187,6 @@ class TPlanNodeExecSummary(object):
     self.estimated_stats = estimated_stats
     self.exec_stats = exec_stats
     self.is_broadcast = is_broadcast
-    self.num_hosts = num_hosts
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -247,11 +244,6 @@ class TPlanNodeExecSummary(object):
           self.is_broadcast = iprot.readBool()
         else:
           iprot.skip(ftype)
-      elif fid == 9:
-        if ftype == TType.I32:
-          self.num_hosts = iprot.readI32()
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -297,10 +289,6 @@ class TPlanNodeExecSummary(object):
       oprot.writeFieldBegin('is_broadcast', TType.BOOL, 8)
       oprot.writeBool(self.is_broadcast)
       oprot.writeFieldEnd()
-    if self.num_hosts is not None:
-      oprot.writeFieldBegin('num_hosts', TType.I32, 9)
-      oprot.writeI32(self.num_hosts)
-      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -326,7 +314,6 @@ class TPlanNodeExecSummary(object):
     value = (value * 31) ^ hash(self.estimated_stats)
     value = (value * 31) ^ hash(self.exec_stats)
     value = (value * 31) ^ hash(self.is_broadcast)
-    value = (value * 31) ^ hash(self.num_hosts)
     return value
 
   def __repr__(self):

@@ -947,53 +947,6 @@ struct TGetFunctionsResp {
   2: optional TOperationHandle operationHandle
 }
 
-struct TGetPrimaryKeysReq {
-  // Session to run this request against
-  1: required TSessionHandle sessionHandle
-
-  // Name of the catalog.
-  2: optional TIdentifier catalogName
-
-  // Name of the schema.
-  3: optional TIdentifier schemaName
-
-  // Name of the table.
-  4: optional TIdentifier tableName
-}
-
-struct TGetPrimaryKeysResp {
-  1: required TStatus status
-  2: optional TOperationHandle operationHandle
-}
-
-struct TGetCrossReferenceReq {
-  // Session to run this request against
-  1: required TSessionHandle sessionHandle
-
-  // Name of the parent catalog.
-  2: optional TIdentifier parentCatalogName
-
-  // Name of the parent schema.
-  3: optional TIdentifier parentSchemaName
-
-  // Name of the parent table.
-  4: optional TIdentifier parentTableName
-
-  // Name of the foreign catalog.
-  5: optional TIdentifier foreignCatalogName
-
-  // Name of the foreign schema.
-  6: optional TIdentifier foreignSchemaName
-
-  // Name of the foreign table.
-  7: optional TIdentifier foreignTableName
-}
-
-struct TGetCrossReferenceResp {
-  1: required TStatus status
-  2: optional TOperationHandle operationHandle
-}
-
 
 // GetOperationStatus()
 //
@@ -1016,6 +969,9 @@ struct TGetOperationStatusResp {
 
   // Error message
   5: optional string errorMessage
+
+  // If the operation has the result
+  9: optional bool hasResultSet
 }
 
 
@@ -1206,10 +1162,6 @@ service TCLIService {
   TGetColumnsResp GetColumns(1:TGetColumnsReq req);
 
   TGetFunctionsResp GetFunctions(1:TGetFunctionsReq req);
-
-  TGetPrimaryKeysResp GetPrimaryKeys(1:TGetPrimaryKeysReq req);
-
-  TGetCrossReferenceResp GetCrossReference(1:TGetCrossReferenceReq req);
 
   TGetOperationStatusResp GetOperationStatus(1:TGetOperationStatusReq req);
 

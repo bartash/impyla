@@ -102,44 +102,6 @@ class TImpalaQueryOptions(object):
   NUM_REMOTE_EXECUTOR_CANDIDATES = 75
   NUM_ROWS_PRODUCED_LIMIT = 76
   PLANNER_TESTCASE_MODE = 77
-  DEFAULT_FILE_FORMAT = 78
-  PARQUET_TIMESTAMP_TYPE = 79
-  PARQUET_READ_PAGE_INDEX = 80
-  PARQUET_WRITE_PAGE_INDEX = 81
-  PARQUET_PAGE_ROW_COUNT_LIMIT = 82
-  DISABLE_HDFS_NUM_ROWS_ESTIMATE = 83
-  DEFAULT_HINTS_INSERT_STATEMENT = 84
-  SPOOL_QUERY_RESULTS = 85
-  DEFAULT_TRANSACTIONAL_TYPE = 86
-  STATEMENT_EXPRESSION_LIMIT = 87
-  MAX_STATEMENT_LENGTH_BYTES = 88
-  DISABLE_DATA_CACHE = 89
-  MAX_RESULT_SPOOLING_MEM = 90
-  MAX_SPILLED_RESULT_SPOOLING_MEM = 91
-  DISABLE_HBASE_NUM_ROWS_ESTIMATE = 92
-  FETCH_ROWS_TIMEOUT_MS = 93
-  NOW_STRING = 94
-  PARQUET_OBJECT_STORE_SPLIT_SIZE = 95
-  MEM_LIMIT_EXECUTORS = 96
-  BROADCAST_BYTES_LIMIT = 97
-  PREAGG_BYTES_LIMIT = 98
-  ENABLE_CNF_REWRITES = 99
-  MAX_CNF_EXPRS = 100
-  KUDU_SNAPSHOT_READ_TIMESTAMP_MICROS = 101
-  RETRY_FAILED_QUERIES = 102
-  ENABLED_RUNTIME_FILTER_TYPES = 103
-  ASYNC_CODEGEN = 104
-  ENABLE_DISTINCT_SEMI_JOIN_OPTIMIZATION = 105
-  SORT_RUN_BYTES_LIMIT = 106
-  MAX_FS_WRITERS = 107
-  REFRESH_UPDATED_HMS_PARTITIONS = 108
-  SPOOL_ALL_RESULTS_FOR_RETRIES = 109
-  RUNTIME_FILTER_ERROR_RATE = 110
-  USE_LOCAL_TZ_FOR_UNIX_TIMESTAMP_CONVERSIONS = 111
-  CONVERT_LEGACY_HIVE_PARQUET_UTC_TIMESTAMPS = 112
-  ENABLE_OUTER_JOIN_TO_INNER_TRANSFORMATION = 113
-  TARGETED_KUDU_SCAN_RANGE_LENGTH = 114
-  REPORT_SKEW_LIMIT = 115
 
   _VALUES_TO_NAMES = {
     0: "ABORT_ON_ERROR",
@@ -220,44 +182,6 @@ class TImpalaQueryOptions(object):
     75: "NUM_REMOTE_EXECUTOR_CANDIDATES",
     76: "NUM_ROWS_PRODUCED_LIMIT",
     77: "PLANNER_TESTCASE_MODE",
-    78: "DEFAULT_FILE_FORMAT",
-    79: "PARQUET_TIMESTAMP_TYPE",
-    80: "PARQUET_READ_PAGE_INDEX",
-    81: "PARQUET_WRITE_PAGE_INDEX",
-    82: "PARQUET_PAGE_ROW_COUNT_LIMIT",
-    83: "DISABLE_HDFS_NUM_ROWS_ESTIMATE",
-    84: "DEFAULT_HINTS_INSERT_STATEMENT",
-    85: "SPOOL_QUERY_RESULTS",
-    86: "DEFAULT_TRANSACTIONAL_TYPE",
-    87: "STATEMENT_EXPRESSION_LIMIT",
-    88: "MAX_STATEMENT_LENGTH_BYTES",
-    89: "DISABLE_DATA_CACHE",
-    90: "MAX_RESULT_SPOOLING_MEM",
-    91: "MAX_SPILLED_RESULT_SPOOLING_MEM",
-    92: "DISABLE_HBASE_NUM_ROWS_ESTIMATE",
-    93: "FETCH_ROWS_TIMEOUT_MS",
-    94: "NOW_STRING",
-    95: "PARQUET_OBJECT_STORE_SPLIT_SIZE",
-    96: "MEM_LIMIT_EXECUTORS",
-    97: "BROADCAST_BYTES_LIMIT",
-    98: "PREAGG_BYTES_LIMIT",
-    99: "ENABLE_CNF_REWRITES",
-    100: "MAX_CNF_EXPRS",
-    101: "KUDU_SNAPSHOT_READ_TIMESTAMP_MICROS",
-    102: "RETRY_FAILED_QUERIES",
-    103: "ENABLED_RUNTIME_FILTER_TYPES",
-    104: "ASYNC_CODEGEN",
-    105: "ENABLE_DISTINCT_SEMI_JOIN_OPTIMIZATION",
-    106: "SORT_RUN_BYTES_LIMIT",
-    107: "MAX_FS_WRITERS",
-    108: "REFRESH_UPDATED_HMS_PARTITIONS",
-    109: "SPOOL_ALL_RESULTS_FOR_RETRIES",
-    110: "RUNTIME_FILTER_ERROR_RATE",
-    111: "USE_LOCAL_TZ_FOR_UNIX_TIMESTAMP_CONVERSIONS",
-    112: "CONVERT_LEGACY_HIVE_PARQUET_UTC_TIMESTAMPS",
-    113: "ENABLE_OUTER_JOIN_TO_INNER_TRANSFORMATION",
-    114: "TARGETED_KUDU_SCAN_RANGE_LENGTH",
-    115: "REPORT_SKEW_LIMIT",
   }
 
   _NAMES_TO_VALUES = {
@@ -339,48 +263,10 @@ class TImpalaQueryOptions(object):
     "NUM_REMOTE_EXECUTOR_CANDIDATES": 75,
     "NUM_ROWS_PRODUCED_LIMIT": 76,
     "PLANNER_TESTCASE_MODE": 77,
-    "DEFAULT_FILE_FORMAT": 78,
-    "PARQUET_TIMESTAMP_TYPE": 79,
-    "PARQUET_READ_PAGE_INDEX": 80,
-    "PARQUET_WRITE_PAGE_INDEX": 81,
-    "PARQUET_PAGE_ROW_COUNT_LIMIT": 82,
-    "DISABLE_HDFS_NUM_ROWS_ESTIMATE": 83,
-    "DEFAULT_HINTS_INSERT_STATEMENT": 84,
-    "SPOOL_QUERY_RESULTS": 85,
-    "DEFAULT_TRANSACTIONAL_TYPE": 86,
-    "STATEMENT_EXPRESSION_LIMIT": 87,
-    "MAX_STATEMENT_LENGTH_BYTES": 88,
-    "DISABLE_DATA_CACHE": 89,
-    "MAX_RESULT_SPOOLING_MEM": 90,
-    "MAX_SPILLED_RESULT_SPOOLING_MEM": 91,
-    "DISABLE_HBASE_NUM_ROWS_ESTIMATE": 92,
-    "FETCH_ROWS_TIMEOUT_MS": 93,
-    "NOW_STRING": 94,
-    "PARQUET_OBJECT_STORE_SPLIT_SIZE": 95,
-    "MEM_LIMIT_EXECUTORS": 96,
-    "BROADCAST_BYTES_LIMIT": 97,
-    "PREAGG_BYTES_LIMIT": 98,
-    "ENABLE_CNF_REWRITES": 99,
-    "MAX_CNF_EXPRS": 100,
-    "KUDU_SNAPSHOT_READ_TIMESTAMP_MICROS": 101,
-    "RETRY_FAILED_QUERIES": 102,
-    "ENABLED_RUNTIME_FILTER_TYPES": 103,
-    "ASYNC_CODEGEN": 104,
-    "ENABLE_DISTINCT_SEMI_JOIN_OPTIMIZATION": 105,
-    "SORT_RUN_BYTES_LIMIT": 106,
-    "MAX_FS_WRITERS": 107,
-    "REFRESH_UPDATED_HMS_PARTITIONS": 108,
-    "SPOOL_ALL_RESULTS_FOR_RETRIES": 109,
-    "RUNTIME_FILTER_ERROR_RATE": 110,
-    "USE_LOCAL_TZ_FOR_UNIX_TIMESTAMP_CONVERSIONS": 111,
-    "CONVERT_LEGACY_HIVE_PARQUET_UTC_TIMESTAMPS": 112,
-    "ENABLE_OUTER_JOIN_TO_INNER_TRANSFORMATION": 113,
-    "TARGETED_KUDU_SCAN_RANGE_LENGTH": 114,
-    "REPORT_SKEW_LIMIT": 115,
   }
 
 
-class TDmlResult(object):
+class TInsertResult(object):
   """
   Attributes:
    - rows_modified
@@ -431,7 +317,7 @@ class TDmlResult(object):
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('TDmlResult')
+    oprot.writeStructBegin('TInsertResult')
     if self.rows_modified is not None:
       oprot.writeFieldBegin('rows_modified', TType.MAP, 1)
       oprot.writeMapBegin(TType.STRING, TType.I64, len(self.rows_modified))
@@ -630,337 +516,22 @@ class TResetTableReq(object):
   def __ne__(self, other):
     return not (self == other)
 
-class TPingImpalaHS2ServiceReq(object):
-  """
-  Attributes:
-   - sessionHandle
-  """
-
-  thrift_spec = (
-    None, # 0
-    (1, TType.STRUCT, 'sessionHandle', (impala._thrift_gen.TCLIService.ttypes.TSessionHandle, impala._thrift_gen.TCLIService.ttypes.TSessionHandle.thrift_spec), None, ), # 1
-  )
-
-  def __init__(self, sessionHandle=None,):
-    self.sessionHandle = sessionHandle
-
-  def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      if fid == 1:
-        if ftype == TType.STRUCT:
-          self.sessionHandle = impala._thrift_gen.TCLIService.ttypes.TSessionHandle()
-          self.sessionHandle.read(iprot)
-        else:
-          iprot.skip(ftype)
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-
-  def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStructBegin('TPingImpalaHS2ServiceReq')
-    if self.sessionHandle is not None:
-      oprot.writeFieldBegin('sessionHandle', TType.STRUCT, 1)
-      self.sessionHandle.write(oprot)
-      oprot.writeFieldEnd()
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def validate(self):
-    if self.sessionHandle is None:
-      raise TProtocol.TProtocolException(message='Required field sessionHandle is unset!')
-    return
-
-
-  def __hash__(self):
-    value = 17
-    value = (value * 31) ^ hash(self.sessionHandle)
-    return value
-
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
-
-class TPingImpalaHS2ServiceResp(object):
-  """
-  Attributes:
-   - status
-   - version
-   - webserver_address
-  """
-
-  thrift_spec = (
-    None, # 0
-    (1, TType.STRUCT, 'status', (impala._thrift_gen.TCLIService.ttypes.TStatus, impala._thrift_gen.TCLIService.ttypes.TStatus.thrift_spec), None, ), # 1
-    (2, TType.STRING, 'version', None, None, ), # 2
-    (3, TType.STRING, 'webserver_address', None, None, ), # 3
-  )
-
-  def __init__(self, status=None, version=None, webserver_address=None,):
-    self.status = status
-    self.version = version
-    self.webserver_address = webserver_address
-
-  def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      if fid == 1:
-        if ftype == TType.STRUCT:
-          self.status = impala._thrift_gen.TCLIService.ttypes.TStatus()
-          self.status.read(iprot)
-        else:
-          iprot.skip(ftype)
-      elif fid == 2:
-        if ftype == TType.STRING:
-          self.version = iprot.readString()
-        else:
-          iprot.skip(ftype)
-      elif fid == 3:
-        if ftype == TType.STRING:
-          self.webserver_address = iprot.readString()
-        else:
-          iprot.skip(ftype)
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-
-  def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStructBegin('TPingImpalaHS2ServiceResp')
-    if self.status is not None:
-      oprot.writeFieldBegin('status', TType.STRUCT, 1)
-      self.status.write(oprot)
-      oprot.writeFieldEnd()
-    if self.version is not None:
-      oprot.writeFieldBegin('version', TType.STRING, 2)
-      oprot.writeString(self.version)
-      oprot.writeFieldEnd()
-    if self.webserver_address is not None:
-      oprot.writeFieldBegin('webserver_address', TType.STRING, 3)
-      oprot.writeString(self.webserver_address)
-      oprot.writeFieldEnd()
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def validate(self):
-    if self.status is None:
-      raise TProtocol.TProtocolException(message='Required field status is unset!')
-    return
-
-
-  def __hash__(self):
-    value = 17
-    value = (value * 31) ^ hash(self.status)
-    value = (value * 31) ^ hash(self.version)
-    value = (value * 31) ^ hash(self.webserver_address)
-    return value
-
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
-
-class TCloseImpalaOperationReq(object):
-  """
-  Attributes:
-   - operationHandle
-  """
-
-  thrift_spec = (
-    None, # 0
-    (1, TType.STRUCT, 'operationHandle', (impala._thrift_gen.TCLIService.ttypes.TOperationHandle, impala._thrift_gen.TCLIService.ttypes.TOperationHandle.thrift_spec), None, ), # 1
-  )
-
-  def __init__(self, operationHandle=None,):
-    self.operationHandle = operationHandle
-
-  def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      if fid == 1:
-        if ftype == TType.STRUCT:
-          self.operationHandle = impala._thrift_gen.TCLIService.ttypes.TOperationHandle()
-          self.operationHandle.read(iprot)
-        else:
-          iprot.skip(ftype)
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-
-  def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStructBegin('TCloseImpalaOperationReq')
-    if self.operationHandle is not None:
-      oprot.writeFieldBegin('operationHandle', TType.STRUCT, 1)
-      self.operationHandle.write(oprot)
-      oprot.writeFieldEnd()
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def validate(self):
-    if self.operationHandle is None:
-      raise TProtocol.TProtocolException(message='Required field operationHandle is unset!')
-    return
-
-
-  def __hash__(self):
-    value = 17
-    value = (value * 31) ^ hash(self.operationHandle)
-    return value
-
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
-
-class TCloseImpalaOperationResp(object):
-  """
-  Attributes:
-   - status
-   - dml_result
-  """
-
-  thrift_spec = (
-    None, # 0
-    (1, TType.STRUCT, 'status', (impala._thrift_gen.TCLIService.ttypes.TStatus, impala._thrift_gen.TCLIService.ttypes.TStatus.thrift_spec), None, ), # 1
-    (2, TType.STRUCT, 'dml_result', (TDmlResult, TDmlResult.thrift_spec), None, ), # 2
-  )
-
-  def __init__(self, status=None, dml_result=None,):
-    self.status = status
-    self.dml_result = dml_result
-
-  def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      if fid == 1:
-        if ftype == TType.STRUCT:
-          self.status = impala._thrift_gen.TCLIService.ttypes.TStatus()
-          self.status.read(iprot)
-        else:
-          iprot.skip(ftype)
-      elif fid == 2:
-        if ftype == TType.STRUCT:
-          self.dml_result = TDmlResult()
-          self.dml_result.read(iprot)
-        else:
-          iprot.skip(ftype)
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-
-  def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStructBegin('TCloseImpalaOperationResp')
-    if self.status is not None:
-      oprot.writeFieldBegin('status', TType.STRUCT, 1)
-      self.status.write(oprot)
-      oprot.writeFieldEnd()
-    if self.dml_result is not None:
-      oprot.writeFieldBegin('dml_result', TType.STRUCT, 2)
-      self.dml_result.write(oprot)
-      oprot.writeFieldEnd()
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def validate(self):
-    if self.status is None:
-      raise TProtocol.TProtocolException(message='Required field status is unset!')
-    return
-
-
-  def __hash__(self):
-    value = 17
-    value = (value * 31) ^ hash(self.status)
-    value = (value * 31) ^ hash(self.dml_result)
-    return value
-
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
-
 class TGetExecSummaryReq(object):
   """
   Attributes:
    - operationHandle
    - sessionHandle
-   - include_query_attempts
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRUCT, 'operationHandle', (impala._thrift_gen.TCLIService.ttypes.TOperationHandle, impala._thrift_gen.TCLIService.ttypes.TOperationHandle.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'sessionHandle', (impala._thrift_gen.TCLIService.ttypes.TSessionHandle, impala._thrift_gen.TCLIService.ttypes.TSessionHandle.thrift_spec), None, ), # 2
-    (3, TType.BOOL, 'include_query_attempts', None, False, ), # 3
   )
 
-  def __init__(self, operationHandle=None, sessionHandle=None, include_query_attempts=thrift_spec[3][4],):
+  def __init__(self, operationHandle=None, sessionHandle=None,):
     self.operationHandle = operationHandle
     self.sessionHandle = sessionHandle
-    self.include_query_attempts = include_query_attempts
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -981,11 +552,6 @@ class TGetExecSummaryReq(object):
         if ftype == TType.STRUCT:
           self.sessionHandle = impala._thrift_gen.TCLIService.ttypes.TSessionHandle()
           self.sessionHandle.read(iprot)
-        else:
-          iprot.skip(ftype)
-      elif fid == 3:
-        if ftype == TType.BOOL:
-          self.include_query_attempts = iprot.readBool()
         else:
           iprot.skip(ftype)
       else:
@@ -1006,10 +572,6 @@ class TGetExecSummaryReq(object):
       oprot.writeFieldBegin('sessionHandle', TType.STRUCT, 2)
       self.sessionHandle.write(oprot)
       oprot.writeFieldEnd()
-    if self.include_query_attempts is not None:
-      oprot.writeFieldBegin('include_query_attempts', TType.BOOL, 3)
-      oprot.writeBool(self.include_query_attempts)
-      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -1021,7 +583,6 @@ class TGetExecSummaryReq(object):
     value = 17
     value = (value * 31) ^ hash(self.operationHandle)
     value = (value * 31) ^ hash(self.sessionHandle)
-    value = (value * 31) ^ hash(self.include_query_attempts)
     return value
 
   def __repr__(self):
@@ -1040,20 +601,17 @@ class TGetExecSummaryResp(object):
   Attributes:
    - status
    - summary
-   - failed_summaries
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRUCT, 'status', (impala._thrift_gen.TCLIService.ttypes.TStatus, impala._thrift_gen.TCLIService.ttypes.TStatus.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'summary', (impala._thrift_gen.ExecStats.ttypes.TExecSummary, impala._thrift_gen.ExecStats.ttypes.TExecSummary.thrift_spec), None, ), # 2
-    (3, TType.LIST, 'failed_summaries', (TType.STRUCT,(impala._thrift_gen.ExecStats.ttypes.TExecSummary, impala._thrift_gen.ExecStats.ttypes.TExecSummary.thrift_spec)), None, ), # 3
   )
 
-  def __init__(self, status=None, summary=None, failed_summaries=None,):
+  def __init__(self, status=None, summary=None,):
     self.status = status
     self.summary = summary
-    self.failed_summaries = failed_summaries
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -1076,17 +634,6 @@ class TGetExecSummaryResp(object):
           self.summary.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 3:
-        if ftype == TType.LIST:
-          self.failed_summaries = []
-          (_etype12, _size9) = iprot.readListBegin()
-          for _i13 in xrange(_size9):
-            _elem14 = impala._thrift_gen.ExecStats.ttypes.TExecSummary()
-            _elem14.read(iprot)
-            self.failed_summaries.append(_elem14)
-          iprot.readListEnd()
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1105,13 +652,6 @@ class TGetExecSummaryResp(object):
       oprot.writeFieldBegin('summary', TType.STRUCT, 2)
       self.summary.write(oprot)
       oprot.writeFieldEnd()
-    if self.failed_summaries is not None:
-      oprot.writeFieldBegin('failed_summaries', TType.LIST, 3)
-      oprot.writeListBegin(TType.STRUCT, len(self.failed_summaries))
-      for iter15 in self.failed_summaries:
-        iter15.write(oprot)
-      oprot.writeListEnd()
-      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -1125,7 +665,6 @@ class TGetExecSummaryResp(object):
     value = 17
     value = (value * 31) ^ hash(self.status)
     value = (value * 31) ^ hash(self.summary)
-    value = (value * 31) ^ hash(self.failed_summaries)
     return value
 
   def __repr__(self):
@@ -1145,7 +684,6 @@ class TGetRuntimeProfileReq(object):
    - operationHandle
    - sessionHandle
    - format
-   - include_query_attempts
   """
 
   thrift_spec = (
@@ -1153,14 +691,12 @@ class TGetRuntimeProfileReq(object):
     (1, TType.STRUCT, 'operationHandle', (impala._thrift_gen.TCLIService.ttypes.TOperationHandle, impala._thrift_gen.TCLIService.ttypes.TOperationHandle.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'sessionHandle', (impala._thrift_gen.TCLIService.ttypes.TSessionHandle, impala._thrift_gen.TCLIService.ttypes.TSessionHandle.thrift_spec), None, ), # 2
     (3, TType.I32, 'format', None,     0, ), # 3
-    (4, TType.BOOL, 'include_query_attempts', None, False, ), # 4
   )
 
-  def __init__(self, operationHandle=None, sessionHandle=None, format=thrift_spec[3][4], include_query_attempts=thrift_spec[4][4],):
+  def __init__(self, operationHandle=None, sessionHandle=None, format=thrift_spec[3][4],):
     self.operationHandle = operationHandle
     self.sessionHandle = sessionHandle
     self.format = format
-    self.include_query_attempts = include_query_attempts
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -1188,11 +724,6 @@ class TGetRuntimeProfileReq(object):
           self.format = iprot.readI32()
         else:
           iprot.skip(ftype)
-      elif fid == 4:
-        if ftype == TType.BOOL:
-          self.include_query_attempts = iprot.readBool()
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1215,10 +746,6 @@ class TGetRuntimeProfileReq(object):
       oprot.writeFieldBegin('format', TType.I32, 3)
       oprot.writeI32(self.format)
       oprot.writeFieldEnd()
-    if self.include_query_attempts is not None:
-      oprot.writeFieldBegin('include_query_attempts', TType.BOOL, 4)
-      oprot.writeBool(self.include_query_attempts)
-      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -1231,7 +758,6 @@ class TGetRuntimeProfileReq(object):
     value = (value * 31) ^ hash(self.operationHandle)
     value = (value * 31) ^ hash(self.sessionHandle)
     value = (value * 31) ^ hash(self.format)
-    value = (value * 31) ^ hash(self.include_query_attempts)
     return value
 
   def __repr__(self):
@@ -1251,8 +777,6 @@ class TGetRuntimeProfileResp(object):
    - status
    - profile
    - thrift_profile
-   - failed_profiles
-   - failed_thrift_profiles
   """
 
   thrift_spec = (
@@ -1260,16 +784,12 @@ class TGetRuntimeProfileResp(object):
     (1, TType.STRUCT, 'status', (impala._thrift_gen.TCLIService.ttypes.TStatus, impala._thrift_gen.TCLIService.ttypes.TStatus.thrift_spec), None, ), # 1
     (2, TType.STRING, 'profile', None, None, ), # 2
     (3, TType.STRUCT, 'thrift_profile', (impala._thrift_gen.RuntimeProfile.ttypes.TRuntimeProfileTree, impala._thrift_gen.RuntimeProfile.ttypes.TRuntimeProfileTree.thrift_spec), None, ), # 3
-    (4, TType.LIST, 'failed_profiles', (TType.STRING,None), None, ), # 4
-    (5, TType.LIST, 'failed_thrift_profiles', (TType.STRUCT,(impala._thrift_gen.RuntimeProfile.ttypes.TRuntimeProfileTree, impala._thrift_gen.RuntimeProfile.ttypes.TRuntimeProfileTree.thrift_spec)), None, ), # 5
   )
 
-  def __init__(self, status=None, profile=None, thrift_profile=None, failed_profiles=None, failed_thrift_profiles=None,):
+  def __init__(self, status=None, profile=None, thrift_profile=None,):
     self.status = status
     self.profile = profile
     self.thrift_profile = thrift_profile
-    self.failed_profiles = failed_profiles
-    self.failed_thrift_profiles = failed_thrift_profiles
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -1297,27 +817,6 @@ class TGetRuntimeProfileResp(object):
           self.thrift_profile.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 4:
-        if ftype == TType.LIST:
-          self.failed_profiles = []
-          (_etype19, _size16) = iprot.readListBegin()
-          for _i20 in xrange(_size16):
-            _elem21 = iprot.readString()
-            self.failed_profiles.append(_elem21)
-          iprot.readListEnd()
-        else:
-          iprot.skip(ftype)
-      elif fid == 5:
-        if ftype == TType.LIST:
-          self.failed_thrift_profiles = []
-          (_etype25, _size22) = iprot.readListBegin()
-          for _i26 in xrange(_size22):
-            _elem27 = impala._thrift_gen.RuntimeProfile.ttypes.TRuntimeProfileTree()
-            _elem27.read(iprot)
-            self.failed_thrift_profiles.append(_elem27)
-          iprot.readListEnd()
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1340,20 +839,6 @@ class TGetRuntimeProfileResp(object):
       oprot.writeFieldBegin('thrift_profile', TType.STRUCT, 3)
       self.thrift_profile.write(oprot)
       oprot.writeFieldEnd()
-    if self.failed_profiles is not None:
-      oprot.writeFieldBegin('failed_profiles', TType.LIST, 4)
-      oprot.writeListBegin(TType.STRING, len(self.failed_profiles))
-      for iter28 in self.failed_profiles:
-        oprot.writeString(iter28)
-      oprot.writeListEnd()
-      oprot.writeFieldEnd()
-    if self.failed_thrift_profiles is not None:
-      oprot.writeFieldBegin('failed_thrift_profiles', TType.LIST, 5)
-      oprot.writeListBegin(TType.STRUCT, len(self.failed_thrift_profiles))
-      for iter29 in self.failed_thrift_profiles:
-        iter29.write(oprot)
-      oprot.writeListEnd()
-      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -1368,8 +853,6 @@ class TGetRuntimeProfileResp(object):
     value = (value * 31) ^ hash(self.status)
     value = (value * 31) ^ hash(self.profile)
     value = (value * 31) ^ hash(self.thrift_profile)
-    value = (value * 31) ^ hash(self.failed_profiles)
-    value = (value * 31) ^ hash(self.failed_thrift_profiles)
     return value
 
   def __repr__(self):
