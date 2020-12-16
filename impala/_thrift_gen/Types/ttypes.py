@@ -218,6 +218,20 @@ class TFunctionBinaryType(object):
     "IR": 3,
   }
 
+class TSortingOrder(object):
+  LEXICAL = 0
+  ZORDER = 1
+
+  _VALUES_TO_NAMES = {
+    0: "LEXICAL",
+    1: "ZORDER",
+  }
+
+  _NAMES_TO_VALUES = {
+    "LEXICAL": 0,
+    "ZORDER": 1,
+  }
+
 
 class TScalarType(object):
   """

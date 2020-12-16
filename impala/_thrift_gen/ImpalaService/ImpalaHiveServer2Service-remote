@@ -26,6 +26,8 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print('Functions:')
   print('  TGetExecSummaryResp GetExecSummary(TGetExecSummaryReq req)')
   print('  TGetRuntimeProfileResp GetRuntimeProfile(TGetRuntimeProfileReq req)')
+  print('  TPingImpalaHS2ServiceResp PingImpalaHS2Service(TPingImpalaHS2ServiceReq req)')
+  print('  TCloseImpalaOperationResp CloseImpalaOperation(TCloseImpalaOperationReq req)')
   print('  TOpenSessionResp OpenSession(TOpenSessionReq req)')
   print('  TCloseSessionResp CloseSession(TCloseSessionReq req)')
   print('  TGetInfoResp GetInfo(TGetInfoReq req)')
@@ -37,6 +39,8 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print('  TGetTableTypesResp GetTableTypes(TGetTableTypesReq req)')
   print('  TGetColumnsResp GetColumns(TGetColumnsReq req)')
   print('  TGetFunctionsResp GetFunctions(TGetFunctionsReq req)')
+  print('  TGetPrimaryKeysResp GetPrimaryKeys(TGetPrimaryKeysReq req)')
+  print('  TGetCrossReferenceResp GetCrossReference(TGetCrossReferenceReq req)')
   print('  TGetOperationStatusResp GetOperationStatus(TGetOperationStatusReq req)')
   print('  TCancelOperationResp CancelOperation(TCancelOperationReq req)')
   print('  TCloseOperationResp CloseOperation(TCloseOperationReq req)')
@@ -114,6 +118,18 @@ elif cmd == 'GetRuntimeProfile':
     sys.exit(1)
   pp.pprint(client.GetRuntimeProfile(eval(args[0]),))
 
+elif cmd == 'PingImpalaHS2Service':
+  if len(args) != 1:
+    print('PingImpalaHS2Service requires 1 args')
+    sys.exit(1)
+  pp.pprint(client.PingImpalaHS2Service(eval(args[0]),))
+
+elif cmd == 'CloseImpalaOperation':
+  if len(args) != 1:
+    print('CloseImpalaOperation requires 1 args')
+    sys.exit(1)
+  pp.pprint(client.CloseImpalaOperation(eval(args[0]),))
+
 elif cmd == 'OpenSession':
   if len(args) != 1:
     print('OpenSession requires 1 args')
@@ -179,6 +195,18 @@ elif cmd == 'GetFunctions':
     print('GetFunctions requires 1 args')
     sys.exit(1)
   pp.pprint(client.GetFunctions(eval(args[0]),))
+
+elif cmd == 'GetPrimaryKeys':
+  if len(args) != 1:
+    print('GetPrimaryKeys requires 1 args')
+    sys.exit(1)
+  pp.pprint(client.GetPrimaryKeys(eval(args[0]),))
+
+elif cmd == 'GetCrossReference':
+  if len(args) != 1:
+    print('GetCrossReference requires 1 args')
+    sys.exit(1)
+  pp.pprint(client.GetCrossReference(eval(args[0]),))
 
 elif cmd == 'GetOperationStatus':
   if len(args) != 1:

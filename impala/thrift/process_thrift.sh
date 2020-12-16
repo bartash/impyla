@@ -39,7 +39,7 @@ cp $IMPALA_REPO/common/thrift/Status.thrift $IMPYLA_REPO/impala/thrift
 cp $IMPALA_REPO/common/thrift/Types.thrift $IMPYLA_REPO/impala/thrift
 
 echo "Copying thrift from $IMPALA_THRIFT_VERSION"
-cp $IMPALA_TOOLCHAIN/thrift-$IMPALA_THRIFT_VERSION/share/fb303/if/fb303.thrift \
+cp $IMPALA_TOOLCHAIN/toolchain-packages-gcc7.5.0/thrift-$IMPALA_THRIFT_VERSION/share/fb303/if/fb303.thrift \
     $IMPYLA_REPO/impala/thrift
 
 # beeswax.thrift already includes a namespace py declaration, which breaks my
@@ -50,7 +50,8 @@ grep -v 'namespace py beeswaxd' $IMPALA_REPO/common/thrift/beeswax.thrift \
 
 # hive_metastore.thrift assumes a directory structure for fb303.thrift, so we
 # change the include statement here
-cat $HIVE_SRC_DIR/metastore/if/hive_metastore.thrift \
+# ./Impala/toolchain/cdp_components-6912987/hive-3.1.3000.7.2.7.0-30/standalone-metastore/src/main/thrift/hive_metastore.thrift
+cat $HIVE_SRC_DIR/standalone-metastore/src/main/thrift/hive_metastore.thrift \
         | sed 's/share\/fb303\/if\///g' \
         > $IMPYLA_REPO/impala/thrift/hive_metastore.thrift
 
@@ -77,7 +78,7 @@ for THRIFT_FILE in $IMPYLA_REPO/impala/thrift/*.thrift; do
 done
 
 echo "Generating thrift python modules"
-THRIFT_BIN="$IMPALA_TOOLCHAIN/thrift-$IMPALA_THRIFT_VERSION/bin/thrift"
+THRIFT_BIN="$IMPALA_TOOLCHAIN/toolchain-packages-gcc7.5.0/thrift-$IMPALA_THRIFT_VERSION/bin/thrift"
 $THRIFT_BIN -r --gen py:new_style -out $IMPYLA_REPO $IMPYLA_REPO/impala/thrift/ImpalaService.thrift
 
 echo "Removing extraneous $IMPYLA_REPO/__init__.py"

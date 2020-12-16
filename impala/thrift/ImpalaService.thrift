@@ -90,15 +90,28 @@ enum TImpalaQueryOptions {
   //  invalid, the option is ignored.
   //
   // 2. Global actions
-  //  "<global label>:<command>@<param0>@<param1>@...<paramN>",
-  //  global labels are marked in the code with DEBUG_ACTION*() macros.
+  //  "<global label>:<arg0>:...:<argN>:<command>@<param0>@<param1>@...<paramN>",
+  //  Used with the DebugAction() call, the action will be performed if the label and
+  //  optional arguments all match. The arguments can be used to make the debug action
+  //  context dependent, for example to only fail rpcs when a particular hostname matches.
+  //  Note that some debug actions must be specified as a query option while others must
+  //  be passed in with the startup flag.
   //  Available global actions:
   //  - SLEEP@<ms> will sleep for the 'ms' milliseconds.
   //  - JITTER@<ms>[@<probability>] will sleep for a random amount of time between 0
   //    and 'ms' milliseconds with the given probability. If <probability> is omitted,
   //    it is 1.0.
-  //  - FAIL[@<probability>] returns an INTERNAL_ERROR status with the given
-  //    probability. If <probability> is omitted, it is 1.0.
+  //  - FAIL[@<probability>][@<error>] returns an INTERNAL_ERROR status with the given
+  //    probability and error. If <probability> is omitted, it is 1.0. If 'error' is
+  //    omitted, a generic error of the form: 'Debug Action: <label>:<action>' is used.
+  //    The code executing the debug action may respond to different error messages by
+  //    exercising different error paths.
+  // Examples:
+  // - AC_BEFORE_ADMISSION:SLEEP@1000
+  //   Causes a 1 second sleep before queries are submitted to the admission controller.
+  // - IMPALA_SERVICE_POOL:127.0.0.1:27002:TransmitData:FAIL@0.1@REJECT_TOO_BUSY
+  //   Causes TransmitData rpcs to the third minicluster impalad to fail 10% of the time
+  //   with a "service too busy" error.
   //
   // Only a single ExecNode action is allowed, but multiple global actions can be
   // specified. To specify multiple actions, separate them with "|".
@@ -378,11 +391,214 @@ enum TImpalaQueryOptions {
   // debugging a testcase. Should not be set in user clusters. If set, a warning
   // is emitted in the query runtime profile.
   PLANNER_TESTCASE_MODE = 77
+
+  // Specifies the default table file format.
+  DEFAULT_FILE_FORMAT = 78
+
+  // The physical type and unit used when writing timestamps in Parquet.
+  // Valid values: INT96_NANOS, INT64_MILLIS, INT64_MICROS, INT64_NANOS
+  // Default: INT96_NANOS
+  PARQUET_TIMESTAMP_TYPE = 79
+
+  // Enable using the Parquet page index during scans. The page index contains min/max
+  // statistics at page-level granularity. It can be used to skip pages and rows during
+  // scanning.
+  PARQUET_READ_PAGE_INDEX = 80
+
+  // Enable writing the Parquet page index.
+  PARQUET_WRITE_PAGE_INDEX = 81
+
+  // Maximum number of rows written in a single Parquet data page.
+  PARQUET_PAGE_ROW_COUNT_LIMIT = 82
+
+  // Disable the attempt to compute an estimated number of rows in an
+  // hdfs table.
+  DISABLE_HDFS_NUM_ROWS_ESTIMATE = 83
+
+  // Default hints for insert statement. Will be overridden by hints in the INSERT
+  // statement, if any.
+  DEFAULT_HINTS_INSERT_STATEMENT = 84
+
+  // Enable spooling of query results. If true, query results will be spooled in
+  // memory up to a specified memory limit. If the memory limit is hit, the
+  // coordinator fragment will block until the client has consumed enough rows to free
+  // up more memory. If false, client consumption driven back-pressure controls the rate
+  // at which rows are materialized by the execution tree.
+  SPOOL_QUERY_RESULTS = 85
+
+  // Speficies the default transactional type for new HDFS tables.
+  // Valid values: none, insert_only
+  DEFAULT_TRANSACTIONAL_TYPE = 86
+
+  // Limit on the total number of expressions in the statement. Statements that exceed
+  // the limit will get an error during analysis. This is intended to set an upper
+  // bound on the complexity of statements to avoid resource impacts such as excessive
+  // time in analysis or codegen. This is enforced only for the first pass of analysis
+  // before any rewrites are applied.
+  STATEMENT_EXPRESSION_LIMIT = 87
+
+  // Limit on the total length of a SQL statement. Statements that exceed the maximum
+  // length will get an error before parsing/analysis. This is complementary to the
+  // statement expression limit, because statements of a certain size are highly
+  // likely to violate the statement expression limit. Rejecting them early avoids
+  // the cost of parsing/analysis.
+  MAX_STATEMENT_LENGTH_BYTES = 88
+
+  // Disable the data cache.
+  DISABLE_DATA_CACHE = 89
+
+  // The maximum amount of memory used when spooling query results. If this value is
+  // exceeded when spooling results, all memory will be unpinned and most likely spilled
+  // to disk. Set to 100 MB by default. Only applicable if SPOOL_QUERY_RESULTS
+  // is true. Setting this to 0 or -1 means the memory is unbounded. Cannot be set to
+  // values below -1.
+  MAX_RESULT_SPOOLING_MEM = 90
+
+  // The maximum amount of memory that can be spilled when spooling query results. Must be
+  // greater than or equal to MAX_RESULT_SPOOLING_MEM to allow unpinning all pinned memory
+  // if the amount of spooled results exceeds MAX_RESULT_SPOOLING_MEM. If this value is
+  // exceeded, the coordinator fragment will block until the client has consumed enough
+  // rows to free up more memory. Set to 1 GB by default. Only applicable if
+  // SPOOL_QUERY_RESULTS is true. Setting this to 0 or -1 means the memory is unbounded.
+  // Cannot be set to values below -1.
+  MAX_SPILLED_RESULT_SPOOLING_MEM = 91
+
+  // Disable the normal key sampling of HBase tables in row count and row size estimation.
+  // Set this to true will force the use of HMS table stats.
+  DISABLE_HBASE_NUM_ROWS_ESTIMATE = 92
+
+  // The maximum amount of time, in milliseconds, a fetch rows request (TFetchResultsReq)
+  // from the client should spend fetching results (including waiting for results to
+  // become available and materialize). When result spooling is enabled, a fetch request
+  // to may read multiple RowBatches, in which case, the timeout controls how long the
+  // client waits for all returned RowBatches to be produced. If the timeout is hit, the
+  // client returns whatever rows it has already read. Defaults to 10000 milliseconds. A
+  // value of 0 causes fetch requests to wait indefinitely.
+  FETCH_ROWS_TIMEOUT_MS = 93
+
+  // For testing purposes only. This can provide a datetime string to use as now() for
+  // tests.
+  NOW_STRING = 94
+
+  // The split size of Parquet files when scanning non-block-based storage systems (e.g.
+  // S3, ADLS, etc.). When reading from block-based storage systems (e.g. HDFS), Impala
+  // sets the split size for Parquet files to the size of the blocks. This is done
+  // because Impala assumes Parquet files have a single row group per block (which is
+  // the recommended way Parquet files should be written). However, since non-block-based
+  // storage systems have no concept of blocks, there is no way to derive a good default
+  // value for Parquet split sizes. Defaults to 256 MB, which is the default size of
+  // Parquet files written by Impala (Impala writes Parquet files with a single row
+  // group per file). Must be >= 1 MB.
+  PARQUET_OBJECT_STORE_SPLIT_SIZE = 95
+
+  // For testing purposes only. A per executor approximate limit on the memory consumption
+  // of this query. Only applied if MEM_LIMIT is not specified.
+  // unspecified or a limit of 0 means no limit;
+  // Otherwise specified either as:
+  // a) an int (= number of bytes);
+  // b) a float followed by "M" (MB) or "G" (GB)
+  MEM_LIMIT_EXECUTORS = 96
+
+  // The max number of estimated bytes eligible for a Broadcast operation during a join.
+  // If the planner thinks the total bytes sent to all destinations of a broadcast
+  // exchange will exceed this limit, it will not consider a broadcast and instead
+  // fall back on a hash partition exchange. 0 or -1 means this has no effect.
+  BROADCAST_BYTES_LIMIT = 97
+
+  // The max reservation that each grouping class in a preaggregation will use.
+  // 0 or -1 means this has no effect.
+  PREAGG_BYTES_LIMIT = 98
+
+  // Indicates whether the FE should rewrite disjunctive predicates to conjunctive
+  // normal form (CNF) for optimization purposes. Default is False.
+  ENABLE_CNF_REWRITES = 99
+
+  // The max number of conjunctive normal form (CNF) exprs to create when converting
+  // a disjunctive expression to CNF. Each AND counts as 1 expression. A value of
+  // -1 or 0 means no limit. Default is 0 (unlimited).
+  MAX_CNF_EXPRS = 100
+
+  // Set the timestamp for Kudu snapshot reads in Unix time micros. Only valid if
+  // KUDU_READ_MODE is set to READ_AT_SNAPSHOT.
+  KUDU_SNAPSHOT_READ_TIMESTAMP_MICROS = 101
+
+  // Transparently retry queries that fail due to cluster membership changes. A cluster
+  // membership change includes blacklisting a node and the statestore detecting that a
+  // node has been removed from the cluster membership. From Impala's perspective, a
+  // retried query is a brand new query. From the client perspective, requests for the
+  // failed query are transparently re-routed to the new query.
+  RETRY_FAILED_QUERIES = 102
+
+  // Enabled runtime filter types to be applied to scanner.
+  // This option only apply to Kudu now, will apply to HDFS once we support
+  // min-max filter for HDFS.
+  //     BLOOM   - apply bloom filter only,
+  //     MIN_MAX - apply min-max filter only.
+  //     ALL     - apply both bloom filter and min-max filter (default).
+  ENABLED_RUNTIME_FILTER_TYPES = 103
+
+  // Enable asynchronous codegen.
+  ASYNC_CODEGEN = 104
+
+  // If true, the planner will consider adding a distinct aggregation to SEMI JOIN
+  // operations. If false, disables the optimization (i.e. falls back to pre-Impala-4.0
+  // behaviour).
+  ENABLE_DISTINCT_SEMI_JOIN_OPTIMIZATION = 105
+
+  // The max reservation that sorter will use for intermediate sort runs.
+  // 0 or -1 means this has no effect.
+  SORT_RUN_BYTES_LIMIT = 106
+
+  // Sets an upper limit on the number of fs writer instances to be scheduled during
+  // insert. Currently this limit only applies to HDFS inserts.
+  MAX_FS_WRITERS = 107
+
+  // When this query option is set, a refresh table statement will detect existing
+  // partitions which have been changed in metastore and refresh them. By default, this
+  // option is disabled since there is additional performance hit to fetch all the
+  // partitions and detect if they are not same as ones in the catalogd. Currently, this
+  // option is only applicable for refresh table statement.
+  REFRESH_UPDATED_HMS_PARTITIONS = 108
+
+  // If RETRY_FAILED_QUERIES and SPOOL_QUERY_RESULTS are enabled and this is true,
+  // retryable queries will try to spool all results before returning any to the client.
+  // If the result set is too large to fit into the spooling memory (including the spill
+  // mem), results will be returned and the query will not be retryable. This may have
+  // some performance impact. Set it to false then clients can fetch results immediately
+  // when any of them are ready. Note that in this case, query retry will be skipped if
+  // the client has fetched some results.
+  SPOOL_ALL_RESULTS_FOR_RETRIES = 109
+
+  // A value (0.0, 1.0) that is the target false positive probability for runtime bloom
+  // filters. If not set, falls back to max_filter_error_rate.
+  RUNTIME_FILTER_ERROR_RATE = 110
+
+  // When true, TIMESTAMPs are interpreted in the local time zone (set in query option
+  // TIMEZONE) when converting to and from Unix times.
+  // When false, TIMESTAMPs are interpreted in the UTC time zone.
+  USE_LOCAL_TZ_FOR_UNIX_TIMESTAMP_CONVERSIONS = 111
+
+  // When true, TIMESTAMPs read from files written by Parquet-MR (used by Hive) will
+  // be converted from UTC to local time. Writes are unaffected.
+
+  CONVERT_LEGACY_HIVE_PARQUET_UTC_TIMESTAMPS = 112
+
+  // Indicates whether the FE should attempt to transform outer joins into inner joins.
+  ENABLE_OUTER_JOIN_TO_INNER_TRANSFORMATION = 113
+
+  // Set the target scan range length for scanning kudu tables (in bytes). This is
+  // used to split kudu scan tokens and is treated as a hint by kudu. Therefore,
+  // does not guarantee a limit on the size of the scan range. If unspecified or
+  // set to 0 disables this feature.
+  TARGETED_KUDU_SCAN_RANGE_LENGTH = 114
+
+  // Enable (>=0) or disable(<0) reporting of skews for a query in runtime profile.
+  // When enabled, used as the CoV threshold value in the skew detection formula.
+  REPORT_SKEW_LIMIT = 115
 }
 
 // The summary of a DML statement.
-// TODO: Rename to reflect that this is for all DML.
-struct TInsertResult {
+struct TDmlResult {
   // Number of modified rows per partition. Only applies to HDFS and Kudu tables.
   // The keys represent partitions to create, coded as k1=v1/k2=v2/k3=v3..., with
   // the root in an unpartitioned table being the empty string.
@@ -415,6 +631,40 @@ struct TResetTableReq {
   2: required string table_name
 }
 
+// PingImpalaHS2Service() - ImpalaHiveServer2Service version.
+// Pings the Impala server to confirm that the server is alive and the session identified
+// by 'sessionHandle' is open. Returns metadata about the server. This exists separate
+// from the base HS2 GetInfo() methods because not all relevant metadata is accessible
+// through GetInfo().
+struct TPingImpalaHS2ServiceReq {
+  1: required TCLIService.TSessionHandle sessionHandle
+}
+
+struct TPingImpalaHS2ServiceResp {
+  1: required TCLIService.TStatus status
+
+  // The Impala service's version string.
+  2: optional string version
+
+  // The Impalad's webserver address.
+  3: optional string webserver_address
+}
+
+// CloseImpalaOperation()
+//
+// Extended version of CloseOperation() that, if the operation was a DML
+// operation, returns statistics about the operation.
+struct TCloseImpalaOperationReq {
+  1: required TCLIService.TOperationHandle operationHandle
+}
+
+struct TCloseImpalaOperationResp {
+  1: required TCLIService.TStatus status
+
+  // Populated if the operation was a DML operation.
+  2: optional TDmlResult dml_result
+}
+
 // For all rpc that return a TStatus as part of their result type,
 // if the status_code field is set to anything other than OK, the contents
 // of the remainder of the result type is undefined (typically not set)
@@ -441,7 +691,7 @@ service ImpalaService extends beeswax.BeeswaxService {
       throws(1:beeswax.BeeswaxException error);
 
   // Closes the query handle and return the result summary of the insert.
-  TInsertResult CloseInsert(1:beeswax.QueryHandle handle)
+  TDmlResult CloseInsert(1:beeswax.QueryHandle handle)
       throws(1:beeswax.QueryNotFoundException error, 2:beeswax.BeeswaxException error2);
 
   // Client calls this RPC to verify that the server is an ImpalaService. Returns the
@@ -459,12 +709,21 @@ struct TGetExecSummaryReq {
   1: optional TCLIService.TOperationHandle operationHandle
 
   2: optional TCLIService.TSessionHandle sessionHandle
+
+  // If true, returns the summaries of all query attempts. A TGetExecSummaryResp
+  // always returns the profile for the most recent query attempt, regardless of the
+  // query id specified. Clients should set this to true if they want to retrieve the
+  // summaries of all query attempts (including the failed ones).
+  3: optional bool include_query_attempts = false
 }
 
 struct TGetExecSummaryResp {
   1: required TCLIService.TStatus status
 
   2: optional ExecStats.TExecSummary summary
+
+  // A list of all summaries of the failed query attempts.
+  3: optional list<ExecStats.TExecSummary> failed_summaries
 }
 
 struct TGetRuntimeProfileReq {
@@ -474,22 +733,45 @@ struct TGetRuntimeProfileReq {
 
   3: optional RuntimeProfile.TRuntimeProfileFormat format =
       RuntimeProfile.TRuntimeProfileFormat.STRING
+
+  // If true, returns the profiles of all query attempts. A TGetRuntimeProfileResp
+  // always returns the profile for the most recent query attempt, regardless of the
+  // query id specified. Clients should set this to true if they want to retrieve the
+  // profiles of all query attempts (including the failed ones).
+  4: optional bool include_query_attempts = false
 }
 
 struct TGetRuntimeProfileResp {
   1: required TCLIService.TStatus status
 
-  // Will be set on success if TGetRuntimeProfileReq.format was STRING or BASE64.
+  // Will be set on success if TGetRuntimeProfileReq.format
+  // was STRING, BASE64 or JSON.
   2: optional string profile
 
   // Will be set on success if TGetRuntimeProfileReq.format was THRIFT.
   3: optional RuntimeProfile.TRuntimeProfileTree thrift_profile
+
+  // A list of all the failed query attempts in either STRING, BASE64 or JSON format.
+  4: optional list<string> failed_profiles
+
+  // A list of all the failed query attempts in THRIFT format.
+  5: optional list<RuntimeProfile.TRuntimeProfileTree> failed_thrift_profiles
 }
 
 service ImpalaHiveServer2Service extends TCLIService.TCLIService {
-  // Returns the exec summary for the given query
+  // Returns the exec summary for the given query. The exec summary is only valid for
+  // queries that execute with Impala's backend, i.e. QUERY, DML and COMPUTE_STATS
+  // queries. Otherwise a default-initialized TExecSummary is returned for
+  // backwards-compatibility with impala-shell - see IMPALA-9729.
   TGetExecSummaryResp GetExecSummary(1:TGetExecSummaryReq req);
 
   // Returns the runtime profile string for the given query
   TGetRuntimeProfileResp GetRuntimeProfile(1:TGetRuntimeProfileReq req);
+
+  // Client calls this RPC to verify that the server is an ImpalaService. Returns the
+  // server version.
+  TPingImpalaHS2ServiceResp PingImpalaHS2Service(1:TPingImpalaHS2ServiceReq req);
+
+  // Same as HS2 CloseOperation but can return additional information.
+  TCloseImpalaOperationResp CloseImpalaOperation(1:TCloseImpalaOperationReq req);
 }
