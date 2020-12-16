@@ -1022,7 +1022,11 @@ class ThriftRPC(object):
                           tries_left)
                 open_transport(transport)
                 log.debug('Transport opened')
-                func = getattr(self.client, func_name)
+                # func = getattr(ImpalaHiveServer2Service.Client, func_name)
+                # func = getattr(self.client, func_name)
+                cl = getattr(self.client, '_service')
+                func = getattr(cl, func_name)
+                log.info("from client type %s get func %s", type(self.client), type(func))
                 log.debug('YYY run %s', func_name)
                 return func(request)
             except socket.error:
