@@ -47,7 +47,6 @@ from impala._thrift_api import (
     TGetExecSummaryReq, ImpalaHiveServer2Service, TExecStats, ThriftClient,
     TApplicationException)
 
-from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
 from impala import hiveserver2 as hs2
 from impala._thrift_api import ThriftClient, ImpalaHttpClient
