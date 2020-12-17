@@ -34,6 +34,7 @@ if six.PY3:
     from thriftpy2.transport import (TSocket, TTransportException, TTransportBase) # noqa
     from thriftpy2.transport.buffered import TBufferedTransport  # noqa
 
+from impala.dbapi import connect
 
 from impala._thrift_api import (
     get_socket, get_http_transport, get_transport, TTransportException, TBinaryProtocol, TOpenSessionReq,
@@ -186,6 +187,23 @@ class TestHS2FaultInjection(object):
         cur.close()
         con.close()
         assert self.__expect_msg_retry("OpenSession") in caplog.text
+
+    # FIXME this is copy from test_xxxxx
+    def test_simple_connect(self):
+        con = self.connect()
+        cur = con.cursor()
+        cur.execute('select 1')
+        rows = cur.fetchall()
+        assert rows == [(1,)]
+
+
+
+    def test_simple_connect_orig(self):
+        con = connect("localhost", ENV.http_port, use_http_transport=True, http_path="cliservice")
+        cur = con.cursor()
+        cur.execute('select 1')
+        rows = cur.fetchall()
+        assert rows == [(1,)]
 
     def test_connect_proxy(self, caplog):
         """Tests fault injection in connect().
