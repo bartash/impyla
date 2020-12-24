@@ -1052,6 +1052,9 @@ class ThriftRPC(object):
                                   h, str(h.body or ''), func_name, tries_left, retry_secs)
                         time.sleep(retry_secs)
                     else:
+                        retry_secs = 1  # Future: use exponential backoff?
+                        log.debug("sleeping for %d second before retrying", retry_secs)
+                        time.sleep(retry_secs)
                         log.debug('Caught HttpError %s %s in %s (tries_left=%s)',
                                   h, str(h.body or ''), func_name, tries_left)
 

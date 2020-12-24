@@ -158,6 +158,10 @@ class TestHS2FaultInjection(object):
         from the Retry-After header"""
         return ("sleeping after seeing Retry-After value of 1")
 
+    def __expect_msg_retry_after_default_sleep(self):
+        """Returns expected log message for the default sleep time of 1 second"""
+        return ("sleeping for 1 second before retrying")
+
     def __expect_msg_retry_with_retry_after_no_extra(self, impala_rpc_name):
         """Returns expected log message for rpcs which can be retried and the http
         message has a Retry-After header that can be correctly decoded"""
@@ -193,6 +197,7 @@ class TestHS2FaultInjection(object):
         cur.close()
         con.close()
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
+        assert self.__expect_msg_retry_after_default_sleep() in caplog.text
 
     def test_connect_proxy_no_retry(self, caplog):
         """Tests fault injection in connect().
@@ -207,6 +212,7 @@ class TestHS2FaultInjection(object):
         cur.close()
         con.close()
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
+        assert self.__expect_msg_retry_after_default_sleep() in caplog.text
 
     def test_connect_proxy_bad_retry(self, caplog):
         """Tests fault injection in connect().
@@ -222,6 +228,7 @@ class TestHS2FaultInjection(object):
         cur.close()
         con.close()
         assert self.__expect_msg_retry_with_extra("OpenSession") in caplog.text
+        assert self.__expect_msg_retry_after_default_sleep() in caplog.text
 
     def test_connect_proxy_retry(self, caplog):
         """Tests fault injection in connect().
