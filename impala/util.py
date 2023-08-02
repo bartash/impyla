@@ -14,7 +14,6 @@
 
 from __future__ import absolute_import
 
-import sys
 import warnings
 import logging
 import string
@@ -203,19 +202,13 @@ def get_cookie_expiry(c):
 
 
 def get_all_matching_cookies(cookie_names, path, resp_headers):
-    matching_cookies = None
     if 'Set-Cookie' not in resp_headers:
         return None
 
     cookies = http_cookies.SimpleCookie()
     try:
-        if sys.version_info.major == 2:
-            cookies.load(resp_headers['Set-Cookie'])
-        else:
-            cookie_headers = resp_headers.get_all('Set-Cookie')
-            for header in cookie_headers:
-                cookies.load(header)
-    except Exception:
+        cookies.load(resp_headers['Set-Cookie'])
+    except:
         return None
 
     matching_cookies = []
