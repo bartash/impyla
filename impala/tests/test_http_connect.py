@@ -75,7 +75,7 @@ from impala.dbapi import connect
 
 class TestHttpConnect(object):
   def test_simple_connect(self):
-    con = connect("localhost", ENV.http_port, use_http_transport=True, http_path="cliservice")
+    con = connect("localhost", 25013, use_http_transport=True, http_path="cliservice")
     cur = con.cursor()
     cur.execute('select 1')
     rows = cur.fetchall()
