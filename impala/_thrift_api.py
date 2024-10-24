@@ -68,7 +68,7 @@ class ImpalaHttpClient(TTransportBase):
   MIN_REQUEST_SIZE_FOR_EXPECT = 1024
 
   def __init__(self, uri_or_host, port=None, path=None, cafile=None, cert_file=None,
-               key_file=None, ssl_context=None, http_cookie_names=None):
+               key_file=None, ssl_context=None, http_cookie_names=None, get_user_custom_headers_func=None):
     """ImpalaHttpClient supports two different types of construction:
 
     ImpalaHttpClient(host, port, path) - deprecated
@@ -158,6 +158,10 @@ class ImpalaHttpClient(TTransportBase):
     # new request.
     self.__custom_headers = None
     self.__get_custom_headers_func = None
+    if get_user_custom_headers_func:
+        self.__get_user_custom_headers_func = get_user_custom_headers_func
+    else:
+        self.__get_user_custom_headers_func = None
     # the default user agent if none is provied
     self.__custom_user_agent = 'Python/ImpylaHttpClient'
 
@@ -220,12 +224,20 @@ class ImpalaHttpClient(TTransportBase):
   def setGetCustomHeadersFunc(self, func):
     self.__get_custom_headers_func = func
 
+  # Set callback function which generate HTTP headers for a specific auth mechanism.
+  def setGetUserDefinedCustomHeadersFunc(self, func):
+    self.__get_user_custom_headers_func = func
+
   # Update HTTP headers based on the saved cookies and auth mechanism.
   def refreshCustomHeaders(self):
     if self.__get_custom_headers_func:
       cookie_header, has_auth_cookie = self.getHttpCookieHeaderForRequest()
       self.__custom_headers = \
           self.__get_custom_headers_func(cookie_header, has_auth_cookie)
+    if self.__get_user_custom_headers_func:
+        # maybe just   self.__get_user_custom_headers_func(self.__custom_headers)
+       self.__custom_headers = \
+          self.__get_user_custom_headers_func(self.__custom_headers)
 
   # Return first value as a cookie list for Cookie header. It's a list of name-value
   # pairs in the form of <cookie-name>=<cookie-value>. Pairs in the list are separated by
@@ -393,7 +405,7 @@ def get_socket(host, port, use_ssl, ca_cert):
 def get_http_transport(host, port, http_path, timeout=None, use_ssl=False,
                        ca_cert=None, auth_mechanism='NOSASL', user=None,
                        password=None, kerberos_host=None, kerberos_service_name=None,
-                       http_cookie_names=None, jwt=None, user_agent=None):
+                       http_cookie_names=None, jwt=None, user_agent=None, get_user_custom_headers_func=None):
     # TODO: support timeout
     if timeout is not None:
         log.error('get_http_transport does not support a timeout')
@@ -409,11 +421,13 @@ def get_http_transport(host, port, http_path, timeout=None, use_ssl=False,
         log.debug('get_http_transport url=%s', url)
         # TODO(#362): Add server authentication with thrift 0.12.
         transport = ImpalaHttpClient(url, ssl_context=ssl_ctx,
-                                     http_cookie_names=http_cookie_names)
+                                     http_cookie_names=http_cookie_names,
+                                     get_user_custom_headers_func=get_user_custom_headers_func)
     else:
         url = 'http://%s:%s/%s' % (host, port, http_path)
         log.debug('get_http_transport url=%s', url)
-        transport = ImpalaHttpClient(url, http_cookie_names=http_cookie_names)
+        transport = ImpalaHttpClient(url, http_cookie_names=http_cookie_names,
+                                     get_user_custom_headers_func=get_user_custom_headers_func)
 
     # set custom user agent if provided by user
     if user_agent:
