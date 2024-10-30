@@ -11,13 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import socket
 import threading
 from contextlib import closing
 
 import pytest
+import requests
 import six
+
+if six.PY2:
+  import httplib
 from six.moves import SimpleHTTPServer
 from six.moves import http_client
 from six.moves import socketserver
@@ -66,10 +69,47 @@ def http_503_server():
   yield server
 
   # Cleanup after test.
-  if server.httpd is not None:
-    server.httpd.shutdown()
-  if server.http_server_thread is not None:
-    server.http_server_thread.join()
+  shutdown_server(server)
+
+
+@pytest.yield_fixture
+def http_proxy_server():
+  """A fixture that creates an http proxy."""
+  server = TestHTTPServerProxy(RequestHandlerProxy)
+  yield server
+
+  # Cleanup after test.
+  shutdown_server(server)
+
+class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
+  """A custom http handler acts as an http proxy."""
+
+  def __init__(self, request, client_address, server):
+    http.server.SimpleHTTPRequestHandler.__init__(self, request, client_address,
+                                                  server)
+
+  def do_POST(self):
+
+    data_string = self.rfile.read(int(self.headers['Content-Length']))
+
+    response = requests.post(url="http://localhost:28000/cliservice",
+                             headers=self.headers, data=data_string)
+    self.send_response(code=response.status_code)
+    # FIXME need python 3 version here
+    for key, value in response.headers.iteritems():
+      self.send_header(keyword=key, value=value)
+    self.end_headers()
+    self.wfile.write(response.content)
+    self.wfile.close()
+
+class TestHTTPServerProxy(object):
+  def __init__(self, clazz):
+    self.HOST = "localhost"
+    self.PORT = get_unused_port()
+    self.httpd = socketserver.TCPServer((self.HOST, self.PORT), clazz)
+
+    self.http_server_thread = threading.Thread(target=self.httpd.serve_forever)
+    self.http_server_thread.start()
 
 from impala.dbapi import connect
 
@@ -100,3 +140,10 @@ def get_unused_port():
     s.bind(('', 0))
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     return s.getsockname()[1]
+
+def shutdown_server(server):
+  """Helper method to shutdown a http server."""
+  if server.httpd is not None:
+    server.httpd.shutdown()
+  if server.http_server_thread is not None:
+    server.http_server_thread.join()
