@@ -83,17 +83,21 @@ def http_proxy_server():
 
 class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
   """A custom http handler acts as an http proxy."""
+  saved_headers=None
 
   def __init__(self, request, client_address, server):
     SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self, request, client_address,
                                                   server)
 
+
+
   def do_POST(self):
 
     data_string = self.rfile.read(int(self.headers['Content-Length']))
-
+    # This works in python2 even though self.headers is a Message not a dict
     response = requests.post(url="http://localhost:28000/cliservice",
                              headers=self.headers, data=data_string)
+    RequestHandlerProxy.saved_headers=self.headers.headers
     self.send_response(code=response.status_code)
     # FIXME need python 3 version here
     for key, value in response.headers.iteritems():
@@ -104,12 +108,16 @@ class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 class TestHTTPServerProxy(object):
   def __init__(self, clazz):
+    self.clazz = clazz
     self.HOST = "localhost"
     self.PORT = get_unused_port()
     self.httpd = socketserver.TCPServer((self.HOST, self.PORT), clazz)
 
     self.http_server_thread = threading.Thread(target=self.httpd.serve_forever)
     self.http_server_thread.start()
+
+  def get_headers(self):
+    return self.clazz.saved_headers
 
 from impala.dbapi import connect
 
@@ -141,6 +149,9 @@ class TestHttpConnect(object):
     cur.execute('select 1')
     rows = cur.fetchall()
     assert rows == [(1,)]
+
+    headers = http_proxy_server.get_headers()
+    print("x")
 
 def get_user_custom_headers_func(old_headers):
   headers = []
