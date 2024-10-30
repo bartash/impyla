@@ -68,7 +68,8 @@ class ImpalaHttpClient(TTransportBase):
   MIN_REQUEST_SIZE_FOR_EXPECT = 1024
 
   def __init__(self, uri_or_host, port=None, path=None, cafile=None, cert_file=None,
-               key_file=None, ssl_context=None, http_cookie_names=None, get_user_custom_headers_func=None):
+               key_file=None, ssl_context=None, http_cookie_names=None,
+               get_user_custom_headers_func=None):
     """ImpalaHttpClient supports two different types of construction:
 
     ImpalaHttpClient(host, port, path) - deprecated
@@ -405,7 +406,8 @@ def get_socket(host, port, use_ssl, ca_cert):
 def get_http_transport(host, port, http_path, timeout=None, use_ssl=False,
                        ca_cert=None, auth_mechanism='NOSASL', user=None,
                        password=None, kerberos_host=None, kerberos_service_name=None,
-                       http_cookie_names=None, jwt=None, user_agent=None, get_user_custom_headers_func=None):
+                       http_cookie_names=None, jwt=None, user_agent=None,
+                       get_user_custom_headers_func=None):
     # TODO: support timeout
     if timeout is not None:
         log.error('get_http_transport does not support a timeout')
@@ -420,14 +422,16 @@ def get_http_transport(host, port, http_path, timeout=None, use_ssl=False,
         url = 'https://%s:%s/%s' % (host, port, http_path)
         log.debug('get_http_transport url=%s', url)
         # TODO(#362): Add server authentication with thrift 0.12.
-        transport = ImpalaHttpClient(url, ssl_context=ssl_ctx,
-                                     http_cookie_names=http_cookie_names,
-                                     get_user_custom_headers_func=get_user_custom_headers_func)
+        transport = ImpalaHttpClient(
+            url, ssl_context=ssl_ctx,
+            http_cookie_names=http_cookie_names,
+            get_user_custom_headers_func=get_user_custom_headers_func)
     else:
         url = 'http://%s:%s/%s' % (host, port, http_path)
         log.debug('get_http_transport url=%s', url)
-        transport = ImpalaHttpClient(url, http_cookie_names=http_cookie_names,
-                                     get_user_custom_headers_func=get_user_custom_headers_func)
+        transport = ImpalaHttpClient(
+            url, http_cookie_names=http_cookie_names,
+            get_user_custom_headers_func=get_user_custom_headers_func)
 
     # set custom user agent if provided by user
     if user_agent:

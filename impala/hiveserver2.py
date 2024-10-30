@@ -930,15 +930,16 @@ def connect(host, port, timeout=None, use_ssl=False, ca_cert=None,
             raise NotSupportedError("Server authentication is not supported " +
                                     "with HTTP endpoints")
 
-        transport = get_http_transport(host, port, http_path=http_path,
-                                       use_ssl=use_ssl, ca_cert=ca_cert,
-                                       auth_mechanism=auth_mechanism,
-                                       user=user, password=password,
-                                       kerberos_host=kerberos_host,
-                                       kerberos_service_name=kerberos_service_name,
-                                       http_cookie_names=http_cookie_names,
-                                       jwt=jwt, user_agent=user_agent,
-                                       get_user_custom_headers_func=None)
+        transport = get_http_transport(
+            host, port, http_path=http_path,
+            use_ssl=use_ssl, ca_cert=ca_cert,
+            auth_mechanism=auth_mechanism,
+            user=user, password=password,
+            kerberos_host=kerberos_host,
+            kerberos_service_name=kerberos_service_name,
+            http_cookie_names=http_cookie_names,
+            jwt=jwt, user_agent=user_agent,
+            get_user_custom_headers_func=get_user_custom_headers_func)
     else:
         sock = get_socket(host, port, use_ssl, ca_cert)
 
