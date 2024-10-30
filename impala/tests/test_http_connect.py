@@ -143,8 +143,11 @@ class TestHttpConnect(object):
     assert rows == [(1,)]
 
 def get_user_custom_headers_func(old_headers):
-  old_headers["aaaaa"]
-  return old_headers
+  headers = []
+  headers.append(('key1', 'value1'))
+  headers.append(('key1', 'value2'))
+  headers.append(('key2', 'value3'))
+  return headers
 
 
 def get_unused_port():

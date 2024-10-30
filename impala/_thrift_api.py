@@ -74,7 +74,8 @@ class ImpalaHttpClient(TTransportBase):
 
     ImpalaHttpClient(host, port, path) - deprecated
     ImpalaHttpClient(uri, [port=<n>, path=<s>, cafile=<filename>, cert_file=<filename>,
-        key_file=<filename>, ssl_context=<context>, http_cookie_names=<cookienamelist>])
+        key_file=<filename>, ssl_context=<context>, http_cookie_names=<cookienamelist>],
+        get_user_custom_headers_func=<function_setting_http_headers>)
 
     Only the second supports https.  To properly authenticate against the server,
     provide the client's identity by specifying cert_file and key_file.  To properly
@@ -86,6 +87,8 @@ class ImpalaHttpClient(TTransportBase):
     one of these names is returned in an http response by the server or an intermediate
     proxy then it will be included in each subsequent request for the same connection. If
     it is set as wildcards, all cookies in an http response will be preserved.
+    The optional get_user_custom_headers_func parameter is a function returning
+    a list of tuples, each tuple contains a key-value pair.
     """
     if port is not None:
       warnings.warn(
@@ -158,6 +161,7 @@ class ImpalaHttpClient(TTransportBase):
     # __custom_headers is used to store HTTP headers which are generated in runtime for
     # new request.
     self.__custom_headers = None
+    # __user_custom_headers is a list of tuples, each tuple contains a key-value pair.
     self.__user_custom_headers = None
     self.__get_custom_headers_func = None
     if get_user_custom_headers_func:
@@ -343,7 +347,7 @@ class ImpalaHttpClient(TTransportBase):
         for key, val in six.iteritems(self.__custom_headers):
           self.__http.putheader(key, val)
       if self.__user_custom_headers:
-        for key, val in six.iteritems(self.__user_custom_headers):
+        for key, val in self.__user_custom_headers:
           self.__http.putheader(key, val)
 
       self.__http.endheaders()
