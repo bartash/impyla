@@ -106,6 +106,10 @@ def connect(host='localhost', port=21050, database=None, timeout=None,
         'Python/ImpylaHttpClient' is used
     use_ldap : bool, optional
         Specify `auth_mechanism='LDAP'` instead.
+    get_user_custom_headers_func : function, optional
+        Used to add custom headers to the http messages when using hs2-http protocol.
+        This is a function returning a list of tuples, each tuple contains a key-value
+        pair. This allows duplicate headers to be set.
 
         .. deprecated:: 0.18.0
     auth_cookie_names : list of str or str, optional

@@ -151,6 +151,7 @@ class TestHttpConnect(object):
     assert rows == [(1,)]
 
     headers = http_proxy_server.get_headers()
+
     print("x")
 
 def get_user_custom_headers_func(old_headers):
