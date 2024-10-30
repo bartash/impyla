@@ -143,6 +143,7 @@ class TestHttpConnect(object):
     assert rows == [(1,)]
 
 def get_user_custom_headers_func(old_headers):
+  old_headers["aaaaa"]
   return old_headers
 
 

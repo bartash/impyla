@@ -158,6 +158,7 @@ class ImpalaHttpClient(TTransportBase):
     # __custom_headers is used to store HTTP headers which are generated in runtime for
     # new request.
     self.__custom_headers = None
+    self.__user_custom_headers = None
     self.__get_custom_headers_func = None
     if get_user_custom_headers_func:
         self.__get_user_custom_headers_func = get_user_custom_headers_func
@@ -236,8 +237,7 @@ class ImpalaHttpClient(TTransportBase):
       self.__custom_headers = \
           self.__get_custom_headers_func(cookie_header, has_auth_cookie)
     if self.__get_user_custom_headers_func:
-        # maybe just   self.__get_user_custom_headers_func(self.__custom_headers)
-       self.__custom_headers = \
+       self.__user_custom_headers = \
           self.__get_user_custom_headers_func(self.__custom_headers)
 
   # Return first value as a cookie list for Cookie header. It's a list of name-value
@@ -341,6 +341,9 @@ class ImpalaHttpClient(TTransportBase):
 
       if self.__custom_headers:
         for key, val in six.iteritems(self.__custom_headers):
+          self.__http.putheader(key, val)
+      if self.__user_custom_headers:
+        for key, val in six.iteritems(self.__user_custom_headers):
           self.__http.putheader(key, val)
 
       self.__http.endheaders()
