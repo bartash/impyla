@@ -85,7 +85,7 @@ class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
   """A custom http handler acts as an http proxy."""
 
   def __init__(self, request, client_address, server):
-    http.server.SimpleHTTPRequestHandler.__init__(self, request, client_address,
+    SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self, request, client_address,
                                                   server)
 
   def do_POST(self):
@@ -132,6 +132,18 @@ class TestHttpConnect(object):
       assert str(e) == "HTTP code 503: Service Unavailable"
       assert e.code == http_client.SERVICE_UNAVAILABLE
       assert e.body.decode("utf-8") == "extra text"
+
+  def test_duplicate_headers2(self, http_proxy_server):
+    """FIXME"""
+    con = connect("localhost", http_proxy_server.PORT, use_http_transport=True,
+                  get_user_custom_headers_func=get_user_custom_headers_func)
+    cur = con.cursor()
+    cur.execute('select 1')
+    rows = cur.fetchall()
+    assert rows == [(1,)]
+
+def get_user_custom_headers_func(old_headers):
+  return old_headers
 
 
 def get_unused_port():

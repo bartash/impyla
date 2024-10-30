@@ -44,7 +44,8 @@ def connect(host='localhost', port=21050, database=None, timeout=None,
             ldap_user=None, ldap_password=None, use_kerberos=None,
             protocol=None, krb_host=None, use_http_transport=False,
             http_path='', auth_cookie_names=None, http_cookie_names=None,
-            retries=3, jwt=None, user_agent=None):
+            retries=3, jwt=None, user_agent=None,
+            get_user_custom_headers_func=None):
     """Get a connection to HiveServer2 (HS2).
 
     These options are largely compatible with the impala-shell command line
@@ -203,7 +204,8 @@ def connect(host='localhost', port=21050, database=None, timeout=None,
                           http_path=http_path,
                           http_cookie_names=http_cookie_names,
                           retries=retries,
-                          jwt=jwt, user_agent=user_agent)
+                          jwt=jwt, user_agent=user_agent,
+                          get_user_custom_headers_func=get_user_custom_headers_func)
     return hs2.HiveServer2Connection(service, default_db=database)
 
 
