@@ -97,7 +97,10 @@ class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
     # This works in python2 even though self.headers is a Message not a dict
     response = requests.post(url="http://localhost:28000/cliservice",
                              headers=self.headers, data=data_string)
-    RequestHandlerProxy.saved_headers=self.headers.headers
+
+    header_list = self.decode_raw_headers()
+    RequestHandlerProxy.saved_headers=header_list
+
     self.send_response(code=response.status_code)
     # FIXME need python 3 version here
     for key, value in response.headers.iteritems():
@@ -105,6 +108,17 @@ class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
     self.end_headers()
     self.wfile.write(response.content)
     self.wfile.close()
+
+  def decode_raw_headers(self):
+    """Decode a list of header strings into a list of tuples, each tuple containing a
+    key-value pair. Each header string is like "'Accept-Encoding: identity\\r\\n'"""
+    header_list = []
+    for header in self.headers.headers:
+      stripped = header.strip()
+      key, value = stripped.split(':', 1)
+      header_list.append((key.strip(), value.strip()))
+    return header_list
+
 
 class TestHTTPServerProxy(object):
   def __init__(self, clazz):
