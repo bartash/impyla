@@ -151,7 +151,7 @@ class TestHttpConnect(object):
     assert rows == [(1,)]
 
     headers = http_proxy_server.get_headers()
-
+    assert count_tuples_with_key(headers, "key1") == 2
     print("x")
 
 def get_user_custom_headers_func(old_headers):
@@ -175,3 +175,17 @@ def shutdown_server(server):
     server.httpd.shutdown()
   if server.http_server_thread is not None:
     server.http_server_thread.join()
+
+def count_tuples_with_key(tuple_list, key_to_count):
+  """Counts the number of tuples in a list that have a specific key.
+  Args:
+    tuple_list: A list of key-value tuples.
+    key_to_count: The key to count occurrences of.
+  Returns:
+    The number of tuples with the specified key.
+  """
+  count = 0
+  for key, _ in tuple_list:
+    if key == key_to_count:
+      count += 1
+  return count
