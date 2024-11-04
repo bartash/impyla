@@ -102,10 +102,8 @@ class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
     RequestHandlerProxy.saved_headers=header_list
 
     self.send_response(code=response.status_code)
-    # FIXME need python 3 version here
     # In python3 response.headers is a CaseInsensitiveDict
-    # In pythin2  response.headers is a dict
-    # so use
+    # In pythin2 response.headers is a dict
     for key, value in response.headers.items():
       self.send_header(keyword=key, value=value)
     self.end_headers()
@@ -114,17 +112,20 @@ class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
   def decode_raw_headers(self):
     """Decode a list of header strings into a list of tuples, each tuple containing a
-    key-value pair. Each header string is like "'Accept-Encoding: identity\\r\\n'"""
+    key-value pair."""
     if six.PY2:
       header_list = []
+      # In Python2 self.headers is an instance of mimetools.Message and
+      # self.headers.headers is a list of raw header strings.
+      # An example header string: "'Accept-Encoding: identity\\r\\n'
       for header in self.headers.headers:
         stripped = header.strip()
         key, value = stripped.split(':', 1)
         header_list.append((key.strip(), value.strip()))
       return header_list
     if six.PY3:
+      # In Python 3 self.headers._headers is what we need
       return self.headers._headers
-
 
 
 class TestHTTPServerProxy(object):
