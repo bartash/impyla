@@ -103,7 +103,10 @@ class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
     self.send_response(code=response.status_code)
     # FIXME need python 3 version here
-    for key, value in response.headers.iteritems():
+    # In python3 response.headers is a CaseInsensitiveDict
+    # In pythin2  response.headers is a dict
+    # so use
+    for key, value in response.headers.items():
       self.send_header(keyword=key, value=value)
     self.end_headers()
     self.wfile.write(response.content)
