@@ -112,12 +112,16 @@ class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
   def decode_raw_headers(self):
     """Decode a list of header strings into a list of tuples, each tuple containing a
     key-value pair. Each header string is like "'Accept-Encoding: identity\\r\\n'"""
-    header_list = []
-    for header in self.headers.headers:
-      stripped = header.strip()
-      key, value = stripped.split(':', 1)
-      header_list.append((key.strip(), value.strip()))
-    return header_list
+    if six.PY2:
+      header_list = []
+      for header in self.headers.headers:
+        stripped = header.strip()
+        key, value = stripped.split(':', 1)
+        header_list.append((key.strip(), value.strip()))
+      return header_list
+    if six.PY3:
+      return self.headers._headers
+
 
 
 class TestHTTPServerProxy(object):
