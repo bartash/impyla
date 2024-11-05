@@ -73,77 +73,79 @@ def http_503_server():
 @pytest.yield_fixture
 def http_proxy_server():
   """A fixture that creates a reverse http proxy."""
+
+  class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
+    """A custom http handler that acts as a reverse http proxy. This proxy will forward http
+    messages to Impala, and copy the responses back to the client. In addition, it will save
+    the outgoing http message headers in a class variable so tha they can be accessed by
+    test code."""
+
+    # This class variable is used to store the most recently seen outgoing http
+    # message headers.
+    saved_headers=None
+
+    def __init__(self, request, client_address, server):
+      SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self, request, client_address,
+                                                    server)
+
+    def do_POST(self):
+      # Read the body of the incoming http post message.
+      data_string = self.rfile.read(int(self.headers['Content-Length']))
+      # Save the http headers from the message in a class variable.
+      RequestHandlerProxy.saved_headers = self.decode_raw_headers()
+      # Forward the http post message to Impala and get a response message.
+      response = requests.post(url="http://localhost:28000/cliservice",
+                               headers=self.headers, data=data_string)
+      # Send the response message back to the client.
+      self.send_response(code=response.status_code)
+      # Send the http headers.
+      # In python3 response.headers is a CaseInsensitiveDict
+      # In python2 response.headers is a dict
+      for key, value in response.headers.items():
+        self.send_header(keyword=key, value=value)
+      self.end_headers()
+      # Send the message body.
+      self.wfile.write(response.content)
+      self.wfile.close()
+
+    def decode_raw_headers(self):
+      """Decode a list of header strings into a list of tuples, each tuple containing a
+      key-value pair. The details of how to get the headers are differs between Python2 and
+      Python3"""
+      if six.PY2:
+        header_list = []
+        # In Python2 self.headers is an instance of mimetools.Message and
+        # self.headers.headers is a list of raw header strings.
+        # An example header string: 'Accept-Encoding: identity\\r\\n'
+        for header in self.headers.headers:
+          stripped = header.strip()
+          key, value = stripped.split(':', 1)
+          header_list.append((key.strip(), value.strip()))
+        return header_list
+      if six.PY3:
+        # In Python 3 self.headers._headers is what we need
+        return self.headers._headers
+
+
+  class TestHTTPServerProxy(object):
+    def __init__(self, clazz):
+      self.clazz = clazz
+      self.HOST = "localhost"
+      self.PORT = get_unused_port()
+      self.httpd = socketserver.TCPServer((self.HOST, self.PORT), clazz)
+      self.http_server_thread = threading.Thread(target=self.httpd.serve_forever)
+      self.http_server_thread.start()
+
+    def get_headers(self):
+      """Return the most recently seen outgoing http message headers."""
+      return self.clazz.saved_headers
+
   server = TestHTTPServerProxy(RequestHandlerProxy)
   yield server
 
   # Cleanup after test.
   shutdown_server(server)
 
-class RequestHandlerProxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
-  """A custom http handler that acts as a reverse http proxy. This proxy will forward http
-  messages to Impala, and copy the responses back to the client. In addition, it will save
-  the outgoing http message headers in a class variable so tha they can be accessed by
-  test code."""
-
-  # This class variable is used to store the most recently seen outgoing http
-  # message headers.
-  saved_headers=None
-
-  def __init__(self, request, client_address, server):
-    SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self, request, client_address,
-                                                  server)
-
-  def do_POST(self):
-    # Read the body of the incoming http post message.
-    data_string = self.rfile.read(int(self.headers['Content-Length']))
-    # Save the http headers from the message in a class variable.
-    RequestHandlerProxy.saved_headers = self.decode_raw_headers()
-    # Forward the http post message to Impala and get a response message.
-    response = requests.post(url="http://localhost:28000/cliservice",
-                             headers=self.headers, data=data_string)
-    # Send the response message back to the client.
-    self.send_response(code=response.status_code)
-    # Send the http headers.
-    # In python3 response.headers is a CaseInsensitiveDict
-    # In python2 response.headers is a dict
-    for key, value in response.headers.items():
-      self.send_header(keyword=key, value=value)
-    self.end_headers()
-    # Send the message body.
-    self.wfile.write(response.content)
-    self.wfile.close()
-
-  def decode_raw_headers(self):
-    """Decode a list of header strings into a list of tuples, each tuple containing a
-    key-value pair. The details of how to get the headers are differs between Python2 and
-    Python3"""
-    if six.PY2:
-      header_list = []
-      # In Python2 self.headers is an instance of mimetools.Message and
-      # self.headers.headers is a list of raw header strings.
-      # An example header string: 'Accept-Encoding: identity\\r\\n'
-      for header in self.headers.headers:
-        stripped = header.strip()
-        key, value = stripped.split(':', 1)
-        header_list.append((key.strip(), value.strip()))
-      return header_list
-    if six.PY3:
-      # In Python 3 self.headers._headers is what we need
-      return self.headers._headers
-
-
-class TestHTTPServerProxy(object):
-  def __init__(self, clazz):
-    self.clazz = clazz
-    self.HOST = "localhost"
-    self.PORT = get_unused_port()
-    self.httpd = socketserver.TCPServer((self.HOST, self.PORT), clazz)
-    self.http_server_thread = threading.Thread(target=self.httpd.serve_forever)
-    self.http_server_thread.start()
-
-  def get_headers(self):
-    """Return the most recently seen outgoing http message headers."""
-    return self.clazz.saved_headers
 
 from impala.dbapi import connect
 
