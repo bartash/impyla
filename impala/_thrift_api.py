@@ -232,11 +232,6 @@ class ImpalaHttpClient(TTransportBase):
   def setGetCustomHeadersFunc(self, func):
     self.__get_custom_headers_func = func
 
-  # Set the user-defined callback function which adds custom HTTP headers to outgoing
-  # messages.
-  def setGetUserDefinedCustomHeadersFunc(self, func):
-    self.__get_user_custom_headers_func = func
-
   # Update outgoing HTTP headers.
   # This is done by two callback functions, if present
   # __get_custom_headers_func adds headers based on the saved cookies and auth
