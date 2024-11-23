@@ -94,8 +94,9 @@ def http_proxy_server():
       # Save the http headers from the message in a class variable.
       RequestHandlerProxy.saved_headers = self.decode_raw_headers()
       # Forward the http post message to Impala and get a response message.
-      response = requests.post(url="http://localhost:28000/cliservice",
-                               headers=self.headers, data=data_string)
+      response = requests.post(
+        url="http://localhost:{0}/cliservice".format(ENV.http_port),
+        headers=self.headers, data=data_string)
       # Send the response message back to the client.
       self.send_response(code=response.status_code)
       # Send the http headers.
@@ -110,7 +111,7 @@ def http_proxy_server():
 
     def decode_raw_headers(self):
       """Decode a list of header strings into a list of tuples, each tuple containing a
-      key-value pair. The details of how to get the headers are differs between Python2
+      key-value pair. The details of how to get the headers differs between Python2
       and Python3"""
       if six.PY2:
         header_list = []
